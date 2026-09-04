@@ -1,24 +1,21 @@
-# SocialHub V3 — TheSyncFM
+# SocialHub V5 — Full-stack single Worker
 
-Questa versione aggiunge il collegamento personale Twitch.
+Frontend + API nello stesso Cloudflare Worker.
 
-## Flusso
-1. L'utente clicca "Connetti Twitch".
-2. Il browser va a `/auth/twitch/start` sul Cloudflare Worker.
-3. Twitch gestisce l'autorizzazione.
-4. Il Worker salva la sessione in KV e restituisce un session id alla pagina.
-5. Il frontend salva solo il session id nel localStorage e usa `/twitch/me?session=...` per caricare i dati privati.
-6. Il logout cancella la sessione KV.
+## Struttura
+- `public/index.html`
+- `public/style.css`
+- `src/worker.js`
+- `wrangler.json`
 
-## Endpoint Worker richiesti
-- /auth/twitch/start
-- /auth/twitch/callback
-- /auth/twitch/logout
-- /twitch/me?session=SESSION
-- /twitch/status?login=thesyncfm
+## Cloudflare bindings
+- `TWITCH_CLIENT_ID` (Text)
+- `TWITCH_CLIENT_SECRET` (Secret)
+- `SOCIALHUB_KV` (KV namespace)
 
-## Nota sicurezza
-Il Client Secret Twitch non è presente nel frontend. La sessione è gestita dal Worker/KV.
+## Twitch OAuth callback
+`https://socialhub-web.the-sync-fm.workers.dev/auth/twitch/callback`
 
-## Deploy
-Sostituire `index.html` e `style.css` nel repository GitHub `socialhub`.
+## Important
+The `TWITCH_CLIENT_ID` placeholder in `wrangler.json` is not intended to be committed with the real client ID. In the Cloudflare dashboard keep the actual variable there.
+Deploy as a Worker with Static Assets. Cloudflare supports serving static assets and Worker logic from the same deployment.
