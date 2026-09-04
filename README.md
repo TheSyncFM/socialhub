@@ -1,19 +1,30 @@
-# SocialHub V1 — TheSyncFM
+# SocialHub V2 — TheSyncFM
 
-Prototype gratuito del pannello SocialHub.
+Frontend del pannello SocialHub collegato al Cloudflare Worker.
 
-## Cosa contiene
-- Dashboard
-- Stato live
-- KPI social
-- Calendario live
-- Link-in-bio
-- Social collegati
-- Attività recente
-- Responsive desktop/mobile
+Endpoint:
+https://thesyncfm-socialhub-api.the-sync-fm.workers.dev
 
-## Come provarlo
-Apri `index.html` con un browser.
+Dati reali in questa versione:
+- stato live Twitch
+- titolo live
+- categoria
+- spettatori correnti
+- nome del canale
+- bio
+- immagine profilo
+- aggiornamento manuale
+- refresh automatico ogni 60 secondi
 
-## Prossimo step tecnico
-Collegare autenticazione + database + API ufficiali Twitch/YouTube/Instagram/TikTok/Discord e trasformare i dati demo in dati reali.
+Non vengono inserite credenziali Twitch nel frontend.
+
+Prossimi step:
+- OAuth utente Twitch per statistiche follower e funzioni autorizzate
+- YouTube
+- Instagram
+- TikTok
+- Discord
+- database
+- scheduler
+- analytics storici
+- link-in-bio editabile
