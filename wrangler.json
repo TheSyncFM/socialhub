@@ -6,8 +6,5 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
-  },
-  "vars": {
-    "TWITCH_CLIENT_ID": "SET_IN_CLOUDFLARE"
   }
 }
