@@ -27,8 +27,8 @@
   <main id="dashboard">
     <header>
       <div>
-        <div class="eyebrow">CONTROL CENTER · LIVE DATA</div>
-        <h1>Buongiorno, Manuel 👋</h1>
+        <div class="eyebrow">CONTROL CENTER · ACCOUNT</div>
+        <h1>Buongiorno, <span id="greetingName">Manuel</span> 👋</h1>
         <p class="muted">Il tuo ecosistema social in un unico posto.</p>
       </div>
       <div class="header-actions">
@@ -38,17 +38,26 @@
       </div>
     </header>
 
+    <section class="account-strip">
+      <div class="account-copy">
+        <span class="account-label">ACCOUNT SOCIALHUB</span>
+        <strong id="accountStatus">Nessun account Twitch collegato</strong>
+        <span id="accountHint">Collega Twitch per attivare le funzioni personali.</span>
+      </div>
+      <button class="connect-btn" id="connectTwitchBtn">🔴 Connetti Twitch</button>
+    </section>
+
     <section class="live-banner" id="live">
       <div class="live-left"><span id="liveDot" class="pulse offline"></span><strong id="liveLabel">OFFLINE</strong><span class="divider"></span><span>Twitch</span></div>
       <div class="live-title" id="liveTitle">Controllo live in corso…</div>
-      <div class="live-right"><strong id="viewerCount">—</strong> spettatori <a id="openTwitch" class="banner-link" href="https://www.twitch.tv/thesyncfm" target="_blank" rel="noopener">Apri canale ↗</a></div>
+      <div class="live-right"><strong id="viewerCount">—</strong> spettatori <a class="banner-link" href="https://www.twitch.tv/thesyncfm" target="_blank" rel="noopener">Apri canale ↗</a></div>
     </section>
 
     <section class="stats" id="analytics">
       <article>
         <span class="stat-icon twitch">◉</span>
         <div><span class="label">Twitch</span><strong id="twitchFollowers">—</strong><small>followers</small></div>
-        <em id="twitchStatus">Connesso</em>
+        <em id="twitchStatus">Pubblico</em>
       </article>
       <article>
         <span class="stat-icon yt">▶</span>
@@ -76,25 +85,33 @@
         <div class="event"><div class="date"><b>04</b><span>SET</span></div><div><strong>Friday Night Live</strong><span>Oggi · 21:00</span></div><span class="badge">Twitch</span></div>
         <div class="event"><div class="date"><b>06</b><span>SET</span></div><div><strong>Sunday Session</strong><span>Domenica · 18:00</span></div><span class="badge">Twitch</span></div>
         <div class="event"><div class="date"><b>09</b><span>SET</span></div><div><strong>Midweek Stream</strong><span>Mercoledì · 21:00</span></div><span class="badge">Twitch</span></div>
-        <p class="note">Calendario demo: lo collegheremo alla programmazione reale nella prossima fase.</p>
+        <p class="note">Calendario demo: lo collegheremo alla programmazione reale.</p>
       </section>
 
       <section class="card profile-card" id="social">
         <div class="card-head">
-          <div><h2>Canale Twitch</h2><p class="muted">Dati rilevati in tempo reale</p></div>
-          <span class="connected">● Connesso</span>
+          <div><h2>Account Twitch</h2><p class="muted">Collegamento personale</p></div>
+          <span id="connectedBadge" class="connected muted-connected">● Non collegato</span>
         </div>
+
         <div class="profile">
           <img id="profileImage" src="" alt="" class="avatar" hidden>
           <div class="avatar-fallback" id="avatarFallback">TS</div>
           <div class="profile-text">
             <strong id="displayName">TheSyncFM</strong>
             <span id="channelLogin">@thesyncfm</span>
-            <span id="channelBio">Caricamento informazioni…</span>
+            <span id="channelBio">Collega il tuo account Twitch.</span>
           </div>
         </div>
+
+        <div class="account-metrics">
+          <div><span>Followers</span><strong id="profileFollowers">—</strong></div>
+          <div><span>Stato</span><strong id="profileLive">Offline</strong></div>
+        </div>
+
         <div class="profile-actions">
           <a class="outline-btn" href="https://www.twitch.tv/thesyncfm" target="_blank" rel="noopener">Apri Twitch ↗</a>
+          <button class="danger-btn" id="logoutBtn" hidden>Disconnetti</button>
         </div>
       </section>
     </div>
@@ -118,15 +135,31 @@
       </div>
     </section>
 
-    <section class="card hidden-section" id="settings">
-      <div class="card-head"><div><h2>Impostazioni</h2><p class="muted">Configurazione SocialHub</p></div></div>
-      <p class="muted">Questa sezione verrà collegata alle impostazioni reali dell'account nella fase autenticata.</p>
+    <section class="card" id="settings">
+      <div class="card-head"><div><h2>Social collegati</h2><p class="muted">Gestione account</p></div></div>
+      <div class="settings-row">
+        <div><strong>🔴 Twitch</strong><span id="settingsTwitch">Non collegato</span></div>
+        <button class="secondary compact" id="settingsConnectBtn">Connetti</button>
+      </div>
+      <div class="settings-row disabled-row">
+        <div><strong>▶ YouTube</strong><span>Disponibile nella prossima fase</span></div>
+        <button class="secondary compact" disabled>Presto</button>
+      </div>
+      <div class="settings-row disabled-row">
+        <div><strong>♪ TikTok</strong><span>Disponibile nella prossima fase</span></div>
+        <button class="secondary compact" disabled>Presto</button>
+      </div>
+      <div class="settings-row disabled-row">
+        <div><strong>◎ Instagram</strong><span>Disponibile nella prossima fase</span></div>
+        <button class="secondary compact" disabled>Presto</button>
+      </div>
     </section>
   </main>
 
 <script>
 const API_BASE = "https://thesyncfm-socialhub-api.the-sync-fm.workers.dev";
-const CHANNEL = "thesyncfm";
+const PUBLIC_CHANNEL = "thesyncfm";
+const SESSION_KEY = "socialhub_twitch_session";
 
 const el = (id) => document.getElementById(id);
 
@@ -138,19 +171,59 @@ function formatTime(date) {
   return new Intl.DateTimeFormat("it-IT", {hour:"2-digit", minute:"2-digit"}).format(date);
 }
 
-async function loadTwitch() {
-  const refreshBtn = el("refreshBtn");
-  refreshBtn.disabled = true;
-  refreshBtn.textContent = "↻ Aggiornamento…";
+function getStoredSession() {
+  return localStorage.getItem(SESSION_KEY);
+}
 
+function setConnectedUI(account) {
+  el("accountStatus").textContent = `Twitch collegato: ${account.display_name || account.login}`;
+  el("accountHint").textContent = "Account autorizzato per le funzioni personali.";
+  el("connectTwitchBtn").textContent = "✓ Twitch collegato";
+  el("connectedBadge").textContent = "● Collegato";
+  el("connectedBadge").className = "connected";
+  el("logoutBtn").hidden = false;
+  el("settingsTwitch").textContent = account.display_name || account.login;
+  el("settingsConnectBtn").textContent = "Gestisci";
+  el("displayName").textContent = account.display_name || "Twitch";
+  el("channelLogin").textContent = `@${account.login || PUBLIC_CHANNEL}`;
+  el("channelBio").textContent = account.description || "Account Twitch collegato.";
+  if (account.profile_image_url) {
+    el("profileImage").src = account.profile_image_url;
+    el("profileImage").hidden = false;
+    el("avatarFallback").style.display = "none";
+  }
+}
+
+function clearConnectedUI() {
+  el("accountStatus").textContent = "Nessun account Twitch collegato";
+  el("accountHint").textContent = "Collega Twitch per attivare le funzioni personali.";
+  el("connectTwitchBtn").textContent = "🔴 Connetti Twitch";
+  el("connectedBadge").textContent = "● Non collegato";
+  el("connectedBadge").className = "connected muted-connected";
+  el("logoutBtn").hidden = true;
+  el("settingsTwitch").textContent = "Non collegato";
+  el("settingsConnectBtn").textContent = "Connetti";
+  el("displayName").textContent = "TheSyncFM";
+  el("channelLogin").textContent = "@thesyncfm";
+  el("channelBio").textContent = "Collega il tuo account Twitch.";
+  el("twitchFollowers").textContent = "—";
+  el("profileFollowers").textContent = "—";
+  el("profileLive").textContent = "Offline";
+  el("profileImage").hidden = true;
+  el("avatarFallback").style.display = "grid";
+}
+
+function connectTwitch() {
+  window.location.href = `${API_BASE}/auth/twitch/start`;
+}
+
+async function loadPublicTwitch() {
   try {
     const response = await fetch(
-      `${API_BASE}/twitch/status?login=${encodeURIComponent(CHANNEL)}`,
+      `${API_BASE}/twitch/status?login=${encodeURIComponent(PUBLIC_CHANNEL)}`,
       { cache: "no-store" }
     );
-
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
     const data = await response.json();
     if (!data.ok) throw new Error(data.error || "Risposta API non valida");
 
@@ -158,14 +231,15 @@ async function loadTwitch() {
     const live = data.live || { is_live: false };
     const now = new Date();
 
-    el("displayName").textContent = user.display_name || "TheSyncFM";
-    el("channelLogin").textContent = `@${user.login || CHANNEL}`;
-    el("channelBio").textContent = user.description || "Canale Twitch TheSyncFM";
-
-    if (user.profile_image_url) {
-      el("profileImage").src = user.profile_image_url;
-      el("profileImage").hidden = false;
-      el("avatarFallback").style.display = "none";
+    if (!getStoredSession()) {
+      el("displayName").textContent = user.display_name || "TheSyncFM";
+      el("channelLogin").textContent = `@${user.login || PUBLIC_CHANNEL}`;
+      el("channelBio").textContent = user.description || "Canale Twitch TheSyncFM";
+      if (user.profile_image_url) {
+        el("profileImage").src = user.profile_image_url;
+        el("profileImage").hidden = false;
+        el("avatarFallback").style.display = "none";
+      }
     }
 
     el("lastUpdated").textContent = `Aggiornamento: ${formatTime(now)}`;
@@ -177,28 +251,22 @@ async function loadTwitch() {
       el("liveLabel").textContent = "LIVE ADESSO";
       el("liveTitle").textContent = live.title || "TheSyncFM è in live";
       el("viewerCount").textContent = formatNumber(live.viewer_count ?? 0);
-      el("twitchStatus").textContent = "LIVE";
-      el("twitchStatus").className = "live-text";
       el("activityTitle").textContent = "TheSyncFM è LIVE su Twitch";
       el("activityDetail").textContent = `${live.game_name || "Categoria non disponibile"} · ${live.title || "Live"}`;
       el("activityMetric").textContent = `${formatNumber(live.viewer_count ?? 0)} viewers`;
       el("activityTime").textContent = live.started_at ? formatTime(new Date(live.started_at)) : formatTime(now);
+      el("profileLive").textContent = "LIVE";
     } else {
       el("liveDot").classList.add("offline");
       el("liveLabel").textContent = "OFFLINE";
       el("liveTitle").textContent = "TheSyncFM non è attualmente in live";
       el("viewerCount").textContent = "0";
-      el("twitchStatus").textContent = "Online";
-      el("twitchStatus").className = "live-text offline-text";
       el("activityTitle").textContent = "Controllo canale Twitch completato";
       el("activityDetail").textContent = "Il canale è attualmente offline";
       el("activityMetric").textContent = "0 viewers";
       el("activityTime").textContent = formatTime(now);
+      el("profileLive").textContent = "Offline";
     }
-
-    // Non usiamo un numero demo per i follower: il conteggio richiede
-    // l'accesso OAuth appropriato all'endpoint follower di Twitch.
-    el("twitchFollowers").textContent = "—";
   } catch (error) {
     console.error(error);
     el("apiStatus").textContent = "● API non raggiungibile";
@@ -207,17 +275,90 @@ async function loadTwitch() {
     el("liveLabel").textContent = "ERRORE";
     el("liveTitle").textContent = "Impossibile leggere i dati Twitch";
     el("viewerCount").textContent = "—";
-    el("twitchStatus").textContent = "Errore";
-    el("twitchStatus").className = "live-text offline-text";
-  } finally {
-    refreshBtn.disabled = false;
-    refreshBtn.textContent = "↻ Aggiorna";
   }
 }
 
-el("refreshBtn").addEventListener("click", loadTwitch);
+async function loadPrivateAccount() {
+  const session = getStoredSession();
+  if (!session) return;
+
+  try {
+    const response = await fetch(
+      `${API_BASE}/twitch/me?session=${encodeURIComponent(session)}`,
+      { cache: "no-store" }
+    );
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      localStorage.removeItem(SESSION_KEY);
+      clearConnectedUI();
+      return;
+    }
+
+    setConnectedUI(data.account || {});
+    el("twitchFollowers").textContent = formatNumber(data.followers);
+    el("profileFollowers").textContent = formatNumber(data.followers);
+    el("twitchStatus").textContent = data.live?.is_live ? "LIVE" : "Collegato";
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function logoutTwitch() {
+  const session = getStoredSession();
+
+  if (session) {
+    try {
+      await fetch(
+        `${API_BASE}/auth/twitch/logout?session=${encodeURIComponent(session)}`,
+        { cache: "no-store" }
+      );
+    } catch (error) {
+      console.warn("Logout remoto non riuscito", error);
+    }
+  }
+
+  localStorage.removeItem(SESSION_KEY);
+  clearConnectedUI();
+  await loadPublicTwitch();
+}
+
+async function initialize() {
+  const params = new URLSearchParams(window.location.search);
+  const oauthResult = params.get("twitch");
+  const returnedSession = params.get("session");
+
+  if (oauthResult === "connected" && returnedSession) {
+    localStorage.setItem(SESSION_KEY, returnedSession);
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (oauthResult === "error") {
+    const message = params.get("message") || "Errore durante il collegamento Twitch.";
+    window.history.replaceState({}, document.title, window.location.pathname);
+    alert(message);
+  }
+
+  const session = getStoredSession();
+  if (session) {
+    el("connectTwitchBtn").textContent = "↻ Aggiornamento account…";
+  }
+
+  await loadPublicTwitch();
+  await loadPrivateAccount();
+
+  if (!getStoredSession()) {
+    el("connectTwitchBtn").textContent = "🔴 Connetti Twitch";
+  }
+}
+
+el("connectTwitchBtn").addEventListener("click", connectTwitch);
+el("settingsConnectBtn").addEventListener("click", connectTwitch);
+el("logoutBtn").addEventListener("click", logoutTwitch);
+el("refreshBtn").addEventListener("click", async () => {
+  await loadPublicTwitch();
+  await loadPrivateAccount();
+});
 el("createPostBtn").addEventListener("click", () => {
-  alert("Editor post: lo implementiamo nella prossima fase.");
+  alert("Editor post: lo implementiamo nella fase successiva.");
 });
 
 document.querySelectorAll("nav a,.nav-bottom a").forEach((a) => {
@@ -227,8 +368,11 @@ document.querySelectorAll("nav a,.nav-bottom a").forEach((a) => {
   });
 });
 
-loadTwitch();
-setInterval(loadTwitch, 60000);
+initialize();
+setInterval(async () => {
+  await loadPublicTwitch();
+  await loadPrivateAccount();
+}, 60000);
 </script>
 </body>
 </html>

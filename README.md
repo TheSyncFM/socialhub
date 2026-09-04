@@ -1,30 +1,24 @@
-# SocialHub V2 — TheSyncFM
+# SocialHub V3 — TheSyncFM
 
-Frontend del pannello SocialHub collegato al Cloudflare Worker.
+Questa versione aggiunge il collegamento personale Twitch.
 
-Endpoint:
-https://thesyncfm-socialhub-api.the-sync-fm.workers.dev
+## Flusso
+1. L'utente clicca "Connetti Twitch".
+2. Il browser va a `/auth/twitch/start` sul Cloudflare Worker.
+3. Twitch gestisce l'autorizzazione.
+4. Il Worker salva la sessione in KV e restituisce un session id alla pagina.
+5. Il frontend salva solo il session id nel localStorage e usa `/twitch/me?session=...` per caricare i dati privati.
+6. Il logout cancella la sessione KV.
 
-Dati reali in questa versione:
-- stato live Twitch
-- titolo live
-- categoria
-- spettatori correnti
-- nome del canale
-- bio
-- immagine profilo
-- aggiornamento manuale
-- refresh automatico ogni 60 secondi
+## Endpoint Worker richiesti
+- /auth/twitch/start
+- /auth/twitch/callback
+- /auth/twitch/logout
+- /twitch/me?session=SESSION
+- /twitch/status?login=thesyncfm
 
-Non vengono inserite credenziali Twitch nel frontend.
+## Nota sicurezza
+Il Client Secret Twitch non è presente nel frontend. La sessione è gestita dal Worker/KV.
 
-Prossimi step:
-- OAuth utente Twitch per statistiche follower e funzioni autorizzate
-- YouTube
-- Instagram
-- TikTok
-- Discord
-- database
-- scheduler
-- analytics storici
-- link-in-bio editabile
+## Deploy
+Sostituire `index.html` e `style.css` nel repository GitHub `socialhub`.
