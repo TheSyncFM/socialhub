@@ -1,4 +1,3 @@
-
 const FRONTEND_URL = "https://socialhub-web.the-sync-fm.workers.dev/";
 const TWITCH_REDIRECT_URI = "https://socialhub-web.the-sync-fm.workers.dev/auth/twitch/callback";
 const COOKIE_NAME = "socialhub_session";
