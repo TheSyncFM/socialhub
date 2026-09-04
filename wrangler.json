@@ -7,10 +7,5 @@
     "directory": "./public",
     "binding": "ASSETS"
   },
-  "kv_namespaces": [
-    {
-      "binding": "SOCIALHUB_KV",
-      "id": "ddf4ade3a48f4973aecf1bba0bc06cad"
-    }
-  ]
+  "keep_vars": true
 }
