@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SocialHub — TheSyncFM</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-dot"></span> SocialHub</div>
+    <div class="workspace">THESYNCFM <span>⌄</span></div>
+    <nav>
+      <a class="active" href="#dashboard">⌂ <span>Dashboard</span></a>
+      <a href="#analytics">◫ <span>Analytics</span></a>
+      <a href="#calendar">▦ <span>Calendario</span></a>
+      <a href="#posts">✎ <span>Post</span></a>
+      <a href="#link">↗ <span>Link-in-bio</span></a>
+      <a href="#live">● <span>Live</span></a>
+    </nav>
+    <div class="nav-bottom">
+      <a href="#social">⚙ <span>Social collegati</span></a>
+      <a href="#settings">☷ <span>Impostazioni</span></a>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <div>
+        <div class="eyebrow">CONTROL CENTER</div>
+        <h1>Buongiorno, Manuel 👋</h1>
+        <p class="muted">Tutto il tuo ecosistema social in un unico posto.</p>
+      </div>
+      <button class="primary" onclick="alert('Editor post — in arrivo nella V1.1')">＋ Crea post</button>
+    </header>
+
+    <section class="live-banner">
+      <div class="live-left"><span class="pulse"></span><strong>LIVE ADESSO</strong><span class="divider"></span><span>Twitch</span></div>
+      <div class="live-title">TheSyncFM — Live</div>
+      <div class="live-right"><strong>127</strong> spettatori <button>Apri live ↗</button></div>
+    </section>
+
+    <section class="stats" id="analytics">
+      <article><span class="stat-icon twitch">◉</span><div><span class="label">Twitch</span><strong>1.240</strong><small>followers</small></div><em>+4,8%</em></article>
+      <article><span class="stat-icon yt">▶</span><div><span class="label">YouTube</span><strong>845</strong><small>iscritti</small></div><em>+2,1%</em></article>
+      <article><span class="stat-icon tt">♪</span><div><span class="label">TikTok</span><strong>2.410</strong><small>followers</small></div><em>+8,4%</em></article>
+      <article><span class="stat-icon ig">◎</span><div><span class="label">Instagram</span><strong>1.086</strong><small>followers</small></div><em>+3,2%</em></article>
+    </section>
+
+    <div class="grid">
+      <section class="card calendar" id="calendar">
+        <div class="card-head"><div><h2>Prossime live</h2><p class="muted">Il tuo calendario</p></div><a href="#">Vedi tutto →</a></div>
+        <div class="event"><div class="date"><b>04</b><span>SET</span></div><div><strong>Friday Night Live</strong><span>Oggi · 21:00</span></div><span class="badge">Twitch</span></div>
+        <div class="event"><div class="date"><b>06</b><span>SET</span></div><div><strong>Sunday Session</strong><span>Domenica · 18:00</span></div><span class="badge">Twitch</span></div>
+        <div class="event"><div class="date"><b>09</b><span>SET</span></div><div><strong>Midweek Stream</strong><span>Mercoledì · 21:00</span></div><span class="badge">Twitch</span></div>
+      </section>
+
+      <section class="card links" id="link">
+        <div class="card-head"><div><h2>Il tuo link</h2><p class="muted">Un solo link per tutti i social</p></div></div>
+        <div class="link-box"><span>socialhub.example/<b>thesyncfm</b></span><button onclick="navigator.clipboard?.writeText('socialhub.example/thesyncfm');this.textContent='Copiato ✓'">Copia</button></div>
+        <div class="social-list">
+          <div><span>◉</span>Twitch <small>thesyncfm</small><b>✓</b></div>
+          <div><span>▶</span>YouTube <small>@thesyncfm</small><b>✓</b></div>
+          <div><span>♪</span>TikTok <small>@thesyncfm</small><b>✓</b></div>
+          <div><span>◎</span>Instagram <small>@thesyncfm</small><b>✓</b></div>
+          <div><span>◈</span>Discord <small>Community</small><b>✓</b></div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card" id="posts">
+      <div class="card-head"><div><h2>Attività recente</h2><p class="muted">Ultimi contenuti e pubblicazioni</p></div><a href="#">Apri planner →</a></div>
+      <div class="activity">
+        <div class="activity-icon">◉</div><div><strong>Live terminata su Twitch</strong><span>Friday Night Live · 2h 14m</span></div><b>1.842 views</b><time>2h fa</time>
+      </div>
+      <div class="activity">
+        <div class="activity-icon">▶</div><div><strong>Nuovo video su YouTube</strong><span>Highlights #12</span></div><b>326 views</b><time>ieri</time>
+      </div>
+    </section>
+  </main>
+  <script>
+    document.querySelectorAll('nav a,.nav-bottom a').forEach(a => a.addEventListener('click', e => {
+      document.querySelectorAll('nav a,.nav-bottom a').forEach(x=>x.classList.remove('active'));
+      a.classList.add('active');
+    }));
+  </script>
+</body>
+</html>
