@@ -9,8 +9,8 @@
   },
   "kv_namespaces": [
     {
-      "binding": "SOCIALHUB_KV"
+      "binding": "SOCIALHUB_KV",
+      "id": "dae1d357a4fe4314a4131ca93ed87880"
     }
-  ],
-  "keep_vars": true
+  ]
 }
