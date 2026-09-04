@@ -19,3 +19,4 @@ Frontend + API nello stesso Cloudflare Worker.
 ## Important
 The `TWITCH_CLIENT_ID` placeholder in `wrangler.json` is not intended to be committed with the real client ID. In the Cloudflare dashboard keep the actual variable there.
 Deploy as a Worker with Static Assets. Cloudflare supports serving static assets and Worker logic from the same deployment.
+SocialHub Full Stack build
