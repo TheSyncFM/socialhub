@@ -6,7 +6,7 @@ Frontend + API nello stesso Cloudflare Worker.
 ## Struttura
 - `public/index.html`
 - `public/style.css`
-- `src/worker.js`
+- `src/worker.mjs`
 - `wrangler.json`
 
 ## Cloudflare bindings
