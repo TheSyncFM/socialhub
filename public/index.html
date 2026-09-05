@@ -161,5 +161,8 @@ function route(){const admin=location.pathname.replace(/\/+$/,'')==='/admin';doc
 
 document.getElementById('postText').addEventListener('input',e=>document.getElementById('charCount').textContent=e.target.value.length);
 document.getElementById('publishBtn').onclick=()=>alert('Composer pronto. La pubblicazione reale verrà collegata alle API ufficiali.');
+
+const syncChannel = "BroadcastChannel" in window ? new BroadcastChannel("socialhub-sync") : null;
+syncChannel?.addEventListener("message", e => { if (e.data?.type === "refresh") { location.reload(); } });
 route();
 </script></body></html>
