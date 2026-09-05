@@ -1,57 +1,44 @@
-<!doctype html><html lang="it"><head>
+<!doctype html>
+<html lang="it">
+<head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SocialHub — TheSyncFM</title><link rel="stylesheet" href="/style.css">
-</head><body>
+<title>SocialHub — TheSyncFM</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+#publicApp{min-height:100vh;position:relative;overflow:hidden;background:#06080d}
+.public-page-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:#06080d center/cover no-repeat;opacity:.13;filter:saturate(.9) blur(.2px);transform:scale(1.02)}
+.public-page-overlay{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(6,8,13,.72),rgba(6,8,13,.90))}
+.public-wrap{position:relative;z-index:2}
+.hero{position:relative}
+.hero-avatar-img{object-fit:cover}
+.public-link{position:relative;overflow:hidden;isolation:isolate}
+.public-link .banner-image{position:absolute;left:120px;right:0;top:0;bottom:0;z-index:-3;background-image:var(--banner-image);background-position:center;background-size:cover;transform:scale(1.01);transition:transform .45s ease,filter .45s ease}
+.public-link .banner-overlay{position:absolute;left:120px;right:0;top:0;bottom:0;z-index:-2;background:linear-gradient(90deg,rgba(12,15,22,.95) 0%,rgba(12,15,22,.80) 38%,rgba(12,15,22,.48) 100%);transition:opacity .45s ease}
+.public-link .public-glow{position:absolute;left:120px;right:0;top:0;bottom:0;z-index:-1;opacity:.45;transition:opacity .45s ease}
+.public-link:hover .banner-image{transform:scale(1.07);filter:saturate(1.12) brightness(1.08)}
+.public-link:hover .banner-overlay{opacity:.88}
+.public-link:hover .public-glow{opacity:.75}
+.public-copy>span{color:#d1d7e0!important;font-size:12px!important}
+.public-copy strong{font-weight:800}
+.public-icon{flex:0 0 48px;width:48px;height:48px;display:grid;place-items:center}
+.public-icon img{width:30px!important;height:30px!important;object-fit:contain;display:block}
+@media(max-width:640px){.public-link .banner-image,.public-link .banner-overlay,.public-link .public-glow{left:108px}.public-icon{width:44px;height:44px;flex-basis:44px}.public-icon img{width:28px!important;height:28px!important}}
+</style>
+</head>
+<body>
 <div id="publicApp">
+  <div class="public-page-bg" id="publicPageBg" aria-hidden="true"></div>
+  <div class="public-page-overlay" aria-hidden="true"></div>
   <div class="public-wrap">
     <div class="public-top"><div class="logo"><span class="logo-dot"></span>TheSyncFM</div><span class="live-pill">● LIVE INFO</span></div>
-    <section class="hero" id="profileHero"><div class="hero-avatar-wrap"><div id="publicAvatarFallback" class="hero-avatar">TS</div><img id="publicAvatar" class="hero-avatar-img" alt="Profilo TheSyncFM"></div><h1 id="publicTitle">TheSyncFM</h1><p id="publicBio">Seguici su tutti i nostri canali.</p></section>
-    <div class="link-grid" id="publicLinks"></div><footer>SocialHub · TheSyncFM</footer>
+    <section class="hero" id="profileHero">
+      <div class="hero-avatar-wrap"><div id="publicAvatarFallback" class="hero-avatar">TS</div><img id="publicAvatar" class="hero-avatar-img" alt="Profilo TheSyncFM" hidden></div>
+      <h1 id="publicTitle">TheSyncFM</h1><p id="publicBio">Seguici su tutti i nostri canali.</p>
+    </section>
+    <div class="link-grid" id="publicLinks"></div>
+    <footer>SocialHub · TheSyncFM</footer>
   </div>
 </div>
-
-<div id="adminApp" hidden>
-  <aside class="sidebar">
-    <div class="brand"><span class="logo-dot"></span><span>SocialHub</span></div>
-    <div class="workspace">THESYNCFM <span>⌄</span></div>
-    <nav>
-      <a class="active" href="#dashboard">⌂ <span>Dashboard</span></a>
-      <a href="#analytics">◫ <span>Analytics</span></a>
-      <a href="#calendar">▦ <span>Calendario</span></a>
-      <a href="#composer">✎ <span>Crea post</span></a>
-      <a href="#socials">◎ <span>Social</span></a>
-      <a href="#settings">⚙ <span>Impostazioni</span></a>
-    </nav>
-  </aside>
-  <main>
-    <header><div><div class="eyebrow">PRIVATE CONTROL CENTER</div><h1>Dashboard</h1><p class="muted">Gestisci tutti i tuoi social da un unico pannello.</p></div><span class="secure-badge">🔒 Area privata</span></header>
-    <section class="notice"><div><strong>SocialHub V14</strong><span>Pubblico = link-in-bio · Privato = gestione completa</span></div><button class="ghost" onclick="location.href='/'">Apri pagina pubblica ↗</button></section>
-
-    <section class="stats" id="analytics">
-      <article><span class="stat-icon twitch">◉</span><div><span class="label">Twitch</span><strong id="twitchFollowers">—</strong><small>followers</small></div><em id="twitchSubs">Sub —</em></article>
-      <article><span class="stat-icon yt">▶</span><div><span class="label">YouTube 1</span><strong id="yt1subs">—</strong><small>iscritti</small></div><em>Abbonati —</em></article>
-      <article><span class="stat-icon yt">▶</span><div><span class="label">YouTube 2</span><strong id="yt2subs">—</strong><small>iscritti</small></div><em>Abbonati —</em></article>
-      <article><span class="stat-icon ig">◎</span><div><span class="label">Instagram</span><strong>—</strong><small>followers</small></div><em>—</em></article>
-      <article><span class="stat-icon tt">♪</span><div><span class="label">TikTok</span><strong>—</strong><small>followers</small></div><em>—</em></article>
-      <article><span class="stat-icon kick">K</span><div><span class="label">Kick</span><strong>—</strong><small>followers</small></div><em>Sub —</em></article>
-      <article><span class="stat-icon x">𝕏</span><div><span class="label">X</span><strong>—</strong><small>followers</small></div><em>—</em></article>
-    </section>
-
-    <section class="card" id="composer">
-      <div class="card-head"><div><h2>Crea un post</h2><p class="muted">Scrivi una volta e seleziona dove pubblicarlo.</p></div><span class="muted">Composer</span></div>
-      <div class="composer-grid"><div><label>Testo del post</label><textarea id="postText" placeholder="Scrivi qui il contenuto..."></textarea><div class="counter"><span id="charCount">0</span> caratteri</div><div class="composer-tools"><button class="ghost">＋ Media</button><button class="ghost">＋ Link</button></div></div><div><label>Pubblica su</label><div class="target-list" id="targetList"></div><button class="primary wide" id="publishBtn">Pubblica su selezionati</button><p class="helper">L'interfaccia è pronta per le API ufficiali delle singole piattaforme; le autorizzazioni verranno aggiunte per ciascun account.</p></div></div>
-    </section>
-
-    <div class="two-col">
-      <section class="card" id="socials"><div class="card-head"><div><h2>Social configurati</h2><p class="muted">1 Instagram · 2 YouTube · 1 Twitch · 1 Kick · 1 TikTok · 1 X</p></div></div><div id="socialRows"></div></section>
-      <section class="card" id="calendar"><div class="card-head"><div><h2>Prossime live</h2><p class="muted">Programmazione</p></div></div><div class="event"><div class="date"><b>04</b><span>SET</span></div><div><strong>Friday Night Live</strong><span>Twitch · 21:00</span></div><span class="badge">Twitch</span></div><div class="event"><div class="date"><b>06</b><span>SET</span></div><div><strong>Sunday Session</strong><span>Twitch · 18:00</span></div><span class="badge">Twitch</span></div><div class="event"><div class="date"><b>09</b><span>SET</span></div><div><strong>Midweek Stream</strong><span>Twitch · 21:00</span></div><span class="badge">Twitch</span></div></section>
-    </div>
-
-    <section class="card" id="pageEditor"><div class="card-head"><div><h2>Editor pagina pubblica</h2><p class="muted">Modifica titolo, descrizione e collegamenti dei banner senza toccare il codice.</p></div><span class="muted">Contenuti</span></div><div class="page-editor-grid"><div><label>Titolo pubblico</label><input id="pageTitleInput" class="text-input" type="text" placeholder="TheSyncFM"><label>Descrizione</label><input id="pageBioInput" class="text-input" type="text" placeholder="Seguici su tutti i nostri canali."></div><div><div class="editor-list" id="pageSocialEditor"></div></div></div><p class="helper">Le modifiche vengono salvate nel browser dell'admin. In seguito collegheremo questo salvataggio a Cloudflare per renderlo condiviso su tutti i dispositivi.</p></section><section class="card" id="profileSettings"><div class="card-head"><div><h2>Profilo pubblico</h2><p class="muted">Imposta foto profilo e sfondo della pagina pubblica.</p></div><span class="muted">Personalizzazione</span></div><div class="profile-admin-grid"><div class="upload-box"><div class="upload-preview"><img id="adminAvatarPreview" alt="Anteprima profilo"><span id="adminAvatarFallback">TS</span></div><div class="upload-copy"><strong>Immagine di profilo</strong><small>PNG, JPG o WebP · consigliata 1:1</small><div class="upload-actions"><label class="primary file-btn">Scegli immagine<input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp"></label><button class="ghost compact" id="removeAvatar">Rimuovi</button></div></div></div><div class="upload-box cover-box"><div class="cover-preview" id="adminCoverPreview"><span id="adminCoverPlaceholder">Sfondo pagina</span></div><div class="upload-copy"><strong>Sfondo / copertina</strong><small>Immagine larga · consigliata 1600×900 o superiore</small><div class="upload-actions"><label class="primary file-btn">Scegli sfondo<input id="coverInput" type="file" accept="image/png,image/jpeg,image/webp"></label><button class="ghost compact" id="removeCover">Rimuovi</button></div></div></div></div><p class="helper">Le immagini vengono salvate nelle impostazioni del browser di questo pannello. La sincronizzazione pubblica tra dispositivi verrà collegata al salvataggio Cloudflare nel passaggio successivo.</p></section><section class="card" id="settings"><div class="card-head"><div><h2>Configurazione</h2><p class="muted">Impostazioni dell'ecosistema</p></div></div><div class="settings-grid"><div><span>Pagina pubblica</span><strong>/</strong></div><div><span>Pannello privato</span><strong>/admin</strong></div><div><span>Account gestiti</span><strong>7</strong></div><div><span>Post multipiattaforma</span><strong>Pronto</strong></div></div></section>
-  </main>
-</div>
-
-
 <script>
 const socials=[
 {id:"instagram",label:"Instagram",description:"Seguimi su Instagram",icon:"/assets/icons/instagram.svg",href:"#",theme:"instagram",eyebrow:"SOCIAL",banner:"/assets/banners/instagram.png"},
@@ -62,11 +49,26 @@ const socials=[
 {id:"tiktok",label:"TikTok",description:"Seguimi su TikTok",icon:"/assets/icons/tiktok.svg",href:"#",theme:"tiktok",eyebrow:"SHORT CONTENT",banner:"/assets/banners/tiktok.png"},
 {id:"x",label:"X",description:"Seguimi su X",icon:"/assets/icons/x-twitter.svg",href:"#",theme:"x",eyebrow:"SOCIAL",banner:"/assets/banners/x.png"}
 ];
-let config={page:{},socials:{},media:{}};
-function mediaUrl(key){return config.media?.[key]?`/api/media/${encodeURIComponent(key)}?v=${config.updatedAt||Date.now()}`:null;}
-async function loadConfig(){try{const r=await fetch('/api/config',{cache:'no-store'});if(r.ok){const d=await r.json();if(d.ok)config=d.config||config;}}catch(e){console.warn(e)}renderPublic();applyProfile();}
-function applyProfile(){const app=document.getElementById('publicApp'),avatar=document.getElementById('publicAvatar'),fallback=document.getElementById('publicAvatarFallback');const av=mediaUrl('profile-avatar'),cover=mediaUrl('profile-cover');if(cover){app.style.setProperty('--page-cover',`url("${cover}")`);app.classList.add('has-page-cover')}else{app.style.removeProperty('--page-cover');app.classList.remove('has-page-cover')}if(av){avatar.src=av;avatar.hidden=false;fallback.hidden=true}else{avatar.hidden=true;fallback.hidden=false}avatar.onerror=()=>{avatar.hidden=true;fallback.hidden=false};}
-function renderPublic(){document.getElementById('publicTitle').textContent=config.page?.title||'TheSyncFM';document.getElementById('publicBio').textContent=config.page?.bio||'Seguici su tutti i nostri canali.';const c=document.getElementById('publicLinks');c.innerHTML=socials.map(s=>{const cfg=config.socials?.[s.id]||{};const href=cfg.href??s.href,desc=cfg.description??s.description,bg=mediaUrl('banner-'+s.id)||s.banner;return `<a class="public-link ${s.theme}" href="${href}" style="--banner-image:url("${bg}")" ${href.startsWith('http')?'target="_blank" rel="noopener noreferrer"':''} aria-label="${s.label}"><span class="banner-image" aria-hidden="true"></span><span class="banner-overlay" aria-hidden="true"></span><span class="public-glow"></span><span class="public-icon" aria-hidden="true"><img src="${s.icon}" alt=""></span><span class="public-copy"><small class="public-eyebrow">${s.eyebrow}</small><strong>${s.label}</strong><span>${escapeHtml(desc)}</span></span>${s.id==='twitch'?'<span class="banner-tag">LIVE</span>':''}<span class="public-arrow" aria-hidden="true">→</span></a>`}).join('');}
-function escapeHtml(v){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');}
-loadConfig();setInterval(loadConfig,15000);
-</script></body></html>
+let config={page:{},socials:{},media:{},updatedAt:0};
+const $=id=>document.getElementById(id);
+const mediaUrl=key=>`/api/media/${encodeURIComponent(key)}?v=${Date.now()}`;
+function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;')}
+async function loadConfig(){
+  try{const r=await fetch('/api/config',{cache:'no-store'});const d=await r.json();if(r.ok&&d.ok)config=d.config||config;}catch(e){console.warn(e)}
+  renderPublic(); loadMedia();
+}
+function renderPublic(){
+  $("publicTitle").textContent=config.page?.title||'TheSyncFM';
+  $("publicBio").textContent=config.page?.bio||'Seguici su tutti i nostri canali.';
+  const c=$("publicLinks");
+  c.innerHTML=socials.map(s=>{const cfg=config.socials?.[s.id]||{};const href=(cfg.href??s.href).trim()||'#';const desc=(cfg.description??s.description).trim()||'Seguimi';const bg=mediaUrl('banner-'+s.id);const external=/^https?:\/\//i.test(href);return `<a class="public-link ${s.theme}" href="${esc(href)}" style="--banner-image:url('${bg}')" ${external?'target="_blank" rel="noopener noreferrer"':''} aria-label="${esc(s.label)}"><span class="banner-image" aria-hidden="true"></span><span class="banner-overlay" aria-hidden="true"></span><span class="public-glow" aria-hidden="true"></span><span class="public-icon" aria-hidden="true"><img src="${s.icon}" alt=""></span><span class="public-copy"><small class="public-eyebrow">${s.eyebrow}</small><strong>${esc(s.label)}</strong><span>${esc(desc)}</span></span>${s.id==='twitch'?'<span class="banner-tag">LIVE</span>':''}<span class="public-arrow" aria-hidden="true">→</span></a>`}).join('');
+}
+function loadMedia(){
+ const avatar=$("publicAvatar"),fallback=$("publicAvatarFallback");
+ const a=new Image();a.onload=()=>{avatar.src=mediaUrl('profile-avatar');avatar.hidden=false;fallback.hidden=true};a.onerror=()=>{avatar.hidden=true;fallback.hidden=false};a.src=mediaUrl('profile-avatar');
+ const bg=$("publicPageBg"); const b=new Image(); b.onload=()=>{bg.style.backgroundImage=`url('${mediaUrl('profile-cover')}')`;bg.style.opacity='.13'};b.onerror=()=>{bg.style.backgroundImage='none'};b.src=mediaUrl('profile-cover');
+}
+loadConfig();
+setInterval(loadConfig,10000);
+</script>
+</body></html>
