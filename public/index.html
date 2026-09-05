@@ -25,7 +25,7 @@
   </aside>
   <main>
     <header><div><div class="eyebrow">PRIVATE CONTROL CENTER</div><h1>Dashboard</h1><p class="muted">Gestisci tutti i tuoi social da un unico pannello.</p></div><span class="secure-badge">🔒 Area privata</span></header>
-    <section class="notice"><div><strong>SocialHub V7</strong><span>Pubblico = link-in-bio · Privato = gestione completa</span></div><button class="ghost" onclick="location.href='/'">Apri pagina pubblica ↗</button></section>
+    <section class="notice"><div><strong>SocialHub V12</strong><span>Pubblico = link-in-bio · Privato = gestione completa</span></div><button class="ghost" onclick="location.href='/'">Apri pagina pubblica ↗</button></section>
 
     <section class="stats" id="analytics">
       <article><span class="stat-icon twitch">◉</span><div><span class="label">Twitch</span><strong id="twitchFollowers">—</strong><small>followers</small></div><em id="twitchSubs">Sub —</em></article>
@@ -54,14 +54,18 @@
 
 <script>
 const socials=[
-  {id:"instagram",label:"Instagram",description:"Seguimi su Instagram",icon:"◎",href:"#",type:"Instagram",theme:"instagram",eyebrow:"SOCIAL"},
-  {id:"youtube1",label:"YouTube",description:"Iscriviti al canale principale",icon:"▶",href:"#",type:"YouTube",theme:"youtube",eyebrow:"CANALE 01"},
-  {id:"youtube2",label:"YouTube",description:"Iscriviti al secondo canale",icon:"▶",href:"#",type:"YouTube",theme:"youtube",eyebrow:"CANALE 02"},
-  {id:"twitch",label:"Twitch",description:"Seguimi e guarda le LIVE",icon:"◉",href:"https://www.twitch.tv/thesyncfm",type:"Twitch",theme:"twitch",eyebrow:"LIVE STREAM"},
-  {id:"kick",label:"Kick",description:"Seguimi su Kick",icon:"K",href:"#",type:"Kick",theme:"kick",eyebrow:"LIVE STREAM"},
-  {id:"tiktok",label:"TikTok",description:"Seguimi su TikTok",icon:"♪",href:"#",type:"TikTok",theme:"tiktok",eyebrow:"SHORT CONTENT"},
-  {id:"x",label:"X",description:"Seguimi su X",icon:"𝕏",href:"#",type:"X",theme:"x",eyebrow:"SOCIAL"}
+  {id:"instagram",label:"Instagram",description:"Seguimi su Instagram",icon:"/assets/icons/instagram.svg",href:"#",type:"Instagram",theme:"instagram",eyebrow:"SOCIAL",banner:"/assets/banners/instagram.png"},
+  {id:"youtube1",label:"YouTube",description:"Iscriviti al canale principale",icon:"/assets/icons/youtube.svg",href:"#",type:"YouTube",theme:"youtube",eyebrow:"CANALE 01",banner:"/assets/banners/youtube.png"},
+  {id:"youtube2",label:"YouTube",description:"Iscriviti al secondo canale",icon:"/assets/icons/youtube.svg",href:"#",type:"YouTube",theme:"youtube",eyebrow:"CANALE 02",banner:"/assets/banners/youtube.png"},
+  {id:"twitch",label:"Twitch",description:"Seguimi e guarda le LIVE",icon:"/assets/icons/twitch.svg",href:"https://www.twitch.tv/thesyncfm",type:"Twitch",theme:"twitch",eyebrow:"LIVE STREAM",banner:"/assets/banners/twitch.png"},
+  {id:"kick",label:"Kick",description:"Seguimi su Kick",icon:"/assets/icons/kick.svg",href:"#",type:"Kick",theme:"kick",eyebrow:"LIVE STREAM",banner:"/assets/banners/kick.png"},
+  {id:"tiktok",label:"TikTok",description:"Seguimi su TikTok",icon:"/assets/icons/tiktok.svg",href:"#",type:"TikTok",theme:"tiktok",eyebrow:"SHORT CONTENT",banner:"/assets/banners/tiktok.png"},
+  {id:"x",label:"X",description:"Seguimi su X",icon:"/assets/icons/x-twitter.svg",href:"#",type:"X",theme:"x",eyebrow:"SOCIAL",banner:"/assets/banners/x.png"}
 ];
+
+const BANNER_KEY="socialhub-banners-v1";
+const bannerState=JSON.parse(localStorage.getItem(BANNER_KEY)||"{}");
+function saveBanners(){localStorage.setItem(BANNER_KEY,JSON.stringify(bannerState));renderPublic();renderAdmin();}
 
 const PROFILE_KEY="socialhub-profile-v1";
 const profileState=JSON.parse(localStorage.getItem(PROFILE_KEY)||"{}");
@@ -94,10 +98,14 @@ function setupProfileAdmin(){
 
 function renderPublic(){
   const container=document.getElementById("publicLinks");
-  container.innerHTML=socials.map(s=>`
-    <a class="public-link ${s.theme}" href="${s.href}" ${s.href.startsWith("http")?'target="_blank" rel="noopener noreferrer"':''} aria-label="${s.label}">
+  if(!container)return;
+  container.innerHTML=socials.map(s=>{
+    const bg=bannerState[s.id]||s.banner;
+    return `<a class="public-link ${s.theme}" href="${s.href}" style="--banner-image:url("${bg}")" ${s.href.startsWith("http")?'target="_blank" rel="noopener noreferrer"':''} aria-label="${s.label}">
+      <span class="banner-image" aria-hidden="true"></span>
+      <span class="banner-overlay" aria-hidden="true"></span>
       <span class="public-glow"></span>
-      <span class="public-icon" aria-hidden="true">${s.icon}</span>
+      <span class="public-icon" aria-hidden="true"><img src="${s.icon}" alt=""></span>
       <span class="public-copy">
         <small class="public-eyebrow">${s.eyebrow}</small>
         <strong>${s.label}</strong>
@@ -105,14 +113,28 @@ function renderPublic(){
       </span>
       ${s.id==='twitch'?'<span class="banner-tag">LIVE</span>':''}
       <span class="public-arrow" aria-hidden="true">→</span>
-    </a>`).join("");
+    </a>`;
+  }).join("");
 }
 
 function renderAdmin(){
  setupProfileAdmin();
- document.getElementById("targetList").innerHTML=socials.map(s=>`<label class="target"><input type="checkbox" checked data-id="${s.id}"><span>${s.icon}</span>${s.label}${s.id.startsWith('youtube')?s.id.slice(-1):''}<b>✓</b></label>`).join("");
- document.getElementById("socialRows").innerHTML=socials.map(s=>`<div class="social-row"><div class="social-name"><span class="mini-icon">${s.icon}</span><div><strong>${s.label}${s.id.startsWith('youtube')?' '+s.id.slice(-1):''}</strong><small>${s.type}</small></div></div><span class="status">● Configurabile</span><button class="ghost compact">Modifica</button></div>`).join("");
+ document.getElementById("targetList").innerHTML=socials.map(s=>`<label class="target"><input type="checkbox" checked data-id="${s.id}"><span class="target-icon"><img src="${s.icon}" alt=""></span>${s.label}${s.id.startsWith('youtube')?s.id.slice(-1):''}<b>✓</b></label>`).join("");
+ document.getElementById("socialRows").innerHTML=socials.map(s=>{
+   const bg=bannerState[s.id]||s.banner;
+   return `<div class="social-row social-row-banner" data-social-id="${s.id}">
+     <div class="social-name"><span class="mini-icon"><img src="${s.icon}" alt=""></span><div><strong>${s.label}${s.id.startsWith('youtube')?' '+s.id.slice(-1):''}</strong><small>${s.type}</small></div></div>
+     <div class="row-banner-preview" style="background-image:linear-gradient(90deg,rgba(9,11,16,.15),rgba(9,11,16,.45)),url("${bg}")"></div>
+     <label class="ghost compact file-btn banner-file-btn">Immagine<input type="file" accept="image/png,image/jpeg,image/webp" data-banner-input="${s.id}"></label>
+     <button class="ghost compact" data-banner-reset="${s.id}">Reset</button>
+   </div>`;
+ }).join("");
+ document.querySelectorAll('[data-banner-input]').forEach(input=>input.addEventListener('change',e=>{
+   readImage(e.target.files[0],v=>{bannerState[e.target.dataset.bannerInput]=v;saveBanners();});
+ }));
+ document.querySelectorAll('[data-banner-reset]').forEach(btn=>btn.addEventListener('click',()=>{delete bannerState[btn.dataset.bannerReset];saveBanners();}));
 }
+
 function route(){const admin=location.pathname.replace(/\/+$/,'')==='/admin';document.getElementById('publicApp').hidden=admin;document.getElementById('adminApp').hidden=!admin;if(admin)renderAdmin();else renderPublic()}
 
 document.getElementById('postText').addEventListener('input',e=>document.getElementById('charCount').textContent=e.target.value.length);
