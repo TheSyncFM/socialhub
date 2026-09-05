@@ -67,11 +67,13 @@ const PROFILE_KEY="socialhub-profile-v1";
 const profileState=JSON.parse(localStorage.getItem(PROFILE_KEY)||"{}");
 function saveProfile(){localStorage.setItem(PROFILE_KEY,JSON.stringify(profileState)); applyProfile(); renderAdminProfile();}
 function applyProfile(){
+ const app=document.getElementById("publicApp");
  const hero=document.getElementById("profileHero");
  const avatar=document.getElementById("publicAvatar");
  const fallback=document.getElementById("publicAvatarFallback");
- if(!hero||!avatar||!fallback)return;
- if(profileState.cover){hero.style.setProperty("--cover-image",`url(${profileState.cover})`);hero.classList.add("has-cover");}else{hero.style.removeProperty("--cover-image");hero.classList.remove("has-cover");}
+ if(!app||!hero||!avatar||!fallback)return;
+ if(profileState.cover){app.style.setProperty("--page-cover",`url(${profileState.cover})`);app.classList.add("has-page-cover");}else{app.style.removeProperty("--page-cover");app.classList.remove("has-page-cover");}
+ hero.classList.remove("has-cover");hero.style.removeProperty("--cover-image");
  if(profileState.avatar){avatar.src=profileState.avatar;avatar.hidden=false;fallback.hidden=true;}else{avatar.hidden=true;fallback.hidden=false;}
 }
 function renderAdminProfile(){
