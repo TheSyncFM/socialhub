@@ -25,7 +25,7 @@
   </aside>
   <main>
     <header><div><div class="eyebrow">PRIVATE CONTROL CENTER</div><h1>Dashboard</h1><p class="muted">Gestisci tutti i tuoi social da un unico pannello.</p></div><span class="secure-badge">🔒 Area privata</span></header>
-    <section class="notice"><div><strong>SocialHub V6</strong><span>Pubblico = link-in-bio · Privato = gestione completa</span></div><button class="ghost" onclick="location.href='/'">Apri pagina pubblica ↗</button></section>
+    <section class="notice"><div><strong>SocialHub V7</strong><span>Pubblico = link-in-bio · Privato = gestione completa</span></div><button class="ghost" onclick="location.href='/'">Apri pagina pubblica ↗</button></section>
 
     <section class="stats" id="analytics">
       <article><span class="stat-icon twitch">◉</span><div><span class="label">Twitch</span><strong id="twitchFollowers">—</strong><small>followers</small></div><em id="twitchSubs">Sub —</em></article>
@@ -39,7 +39,7 @@
 
     <section class="card" id="composer">
       <div class="card-head"><div><h2>Crea un post</h2><p class="muted">Scrivi una volta e seleziona dove pubblicarlo.</p></div><span class="muted">Composer</span></div>
-      <div class="composer-grid"><div><label>Testo del post</label><textarea id="postText" placeholder="Scrivi qui il contenuto..."></textarea><div class="counter"><span id="charCount">0</span> caratteri</div><div class="composer-tools"><button class="ghost">＋ Media</button><button class="ghost">＋ Link</button><button class="primary" id="previewPostBtn">Anteprima</button></div></div><div><label>Pubblica su</label><div class="target-list" id="targetList"></div><button class="primary wide" id="publishBtn">Pubblica su selezionati</button><p class="helper">L'interfaccia è pronta per le API ufficiali delle singole piattaforme; le autorizzazioni verranno aggiunte per ciascun account.</p></div></div>
+      <div class="composer-grid"><div><label>Testo del post</label><textarea id="postText" placeholder="Scrivi qui il contenuto..."></textarea><div class="counter"><span id="charCount">0</span> caratteri</div><div class="composer-tools"><button class="ghost">＋ Media</button><button class="ghost">＋ Link</button></div></div><div><label>Pubblica su</label><div class="target-list" id="targetList"></div><button class="primary wide" id="publishBtn">Pubblica su selezionati</button><p class="helper">L'interfaccia è pronta per le API ufficiali delle singole piattaforme; le autorizzazioni verranno aggiunte per ciascun account.</p></div></div>
     </section>
 
     <div class="two-col">
@@ -51,26 +51,41 @@
   </main>
 </div>
 
-<div class="modal" id="modal" hidden><div class="modal-card"><button class="close" id="closeModal">×</button><h3 id="modalTitle">Anteprima</h3><pre id="modalBody"></pre></div></div>
 
 <script>
 const socials=[
-{id:"instagram",label:"Instagram",description:"Seguimi su Instagram",icon:"◎",href:"#",type:"Instagram",theme:"instagram"},
-{id:"youtube1",label:"YouTube — Canale 1",description:"Iscriviti al canale",icon:"▶",href:"#",type:"YouTube",theme:"youtube"},
-{id:"youtube2",label:"YouTube — Canale 2",description:"Iscriviti al secondo canale",icon:"▶",href:"#",type:"YouTube",theme:"youtube"},
-{id:"twitch",label:"Twitch — TheSyncFM",description:"Seguimi e guarda le LIVE",icon:"◉",href:"https://www.twitch.tv/thesyncfm",type:"Twitch",theme:"twitch"},
-{id:"kick",label:"Kick",description:"Seguimi su Kick",icon:"K",href:"#",type:"Kick",theme:"kick"},
-{id:"tiktok",label:"TikTok",description:"Seguimi su TikTok",icon:"♪",href:"#",type:"TikTok",theme:"tiktok"},
-{id:"x",label:"X",description:"Seguimi su X",icon:"𝕏",href:"#",type:"X",theme:"x"}];
-function renderPublic(){document.getElementById("publicLinks").innerHTML=socials.map(s=>`<a class="public-link ${s.theme}" href="${s.href}" ${s.href.startsWith("http")?'target="_blank" rel="noopener"':''} aria-label="${s.label}"><span class="public-icon">${s.icon}</span><span class="public-copy"><strong>${s.label}</strong><small>${s.description}</small></span><span class="public-arrow">→</span></a>`).join("")}
-function renderAdmin(){
- document.getElementById("targetList").innerHTML=socials.map(s=>`<label class="target"><input type="checkbox" checked data-id="${s.id}"><span>${s.icon}</span>${s.label}<b>✓</b></label>`).join("");
- document.getElementById("socialRows").innerHTML=socials.map(s=>`<div class="social-row"><div class="social-name"><span class="mini-icon">${s.icon}</span><div><strong>${s.label}</strong><small>${s.type}</small></div></div><span class="status">● Configurabile</span><button class="ghost compact">Modifica</button></div>`).join("");
+  {id:"instagram",label:"Instagram",description:"Seguimi su Instagram",icon:"◎",href:"#",type:"Instagram",theme:"instagram",eyebrow:"SOCIAL"},
+  {id:"youtube1",label:"YouTube",description:"Iscriviti al canale principale",icon:"▶",href:"#",type:"YouTube",theme:"youtube",eyebrow:"CANALE 01"},
+  {id:"youtube2",label:"YouTube",description:"Iscriviti al secondo canale",icon:"▶",href:"#",type:"YouTube",theme:"youtube",eyebrow:"CANALE 02"},
+  {id:"twitch",label:"Twitch",description:"Seguimi e guarda le LIVE",icon:"◉",href:"https://www.twitch.tv/thesyncfm",type:"Twitch",theme:"twitch",eyebrow:"LIVE STREAM"},
+  {id:"kick",label:"Kick",description:"Seguimi su Kick",icon:"K",href:"#",type:"Kick",theme:"kick",eyebrow:"LIVE STREAM"},
+  {id:"tiktok",label:"TikTok",description:"Seguimi su TikTok",icon:"♪",href:"#",type:"TikTok",theme:"tiktok",eyebrow:"SHORT CONTENT"},
+  {id:"x",label:"X",description:"Seguimi su X",icon:"𝕏",href:"#",type:"X",theme:"x",eyebrow:"SOCIAL"}
+];
+
+function renderPublic(){
+  const container=document.getElementById("publicLinks");
+  container.innerHTML=socials.map(s=>`
+    <a class="public-link ${s.theme}" href="${s.href}" ${s.href.startsWith("http")?'target="_blank" rel="noopener noreferrer"':''} aria-label="${s.label}">
+      <span class="public-glow"></span>
+      <span class="public-icon" aria-hidden="true">${s.icon}</span>
+      <span class="public-copy">
+        <small class="public-eyebrow">${s.eyebrow}</small>
+        <strong>${s.label}</strong>
+        <span>${s.description}</span>
+      </span>
+      ${s.id==='twitch'?'<span class="banner-tag">LIVE</span>':''}
+      <span class="public-arrow" aria-hidden="true">→</span>
+    </a>`).join("");
 }
-function route(){const admin=location.pathname.replace(/\/+$/,"")==="/admin";document.getElementById("publicApp").hidden=admin;document.getElementById("adminApp").hidden=!admin;if(admin)renderAdmin();else renderPublic()}
-document.getElementById("postText").addEventListener("input",e=>document.getElementById("charCount").textContent=e.target.value.length);
-document.getElementById("previewPostBtn").onclick=()=>{const text=document.getElementById("postText").value.trim()||"(nessun testo)";const targets=[...document.querySelectorAll("#targetList input:checked")].map(x=>x.parentElement.textContent.trim());document.getElementById("modalTitle").textContent="Anteprima post";document.getElementById("modalBody").textContent=`TESTO\n${text}\n\nPUBBLICA SU\n${targets.join("\n")||"Nessuna piattaforma selezionata"}`;document.getElementById("modal").hidden=false};
-document.getElementById("publishBtn").onclick=()=>alert("Composer pronto. La pubblicazione reale verrà collegata alle API ufficiali.");
-document.getElementById("closeModal").onclick=()=>document.getElementById("modal").hidden=true;
+
+function renderAdmin(){
+ document.getElementById("targetList").innerHTML=socials.map(s=>`<label class="target"><input type="checkbox" checked data-id="${s.id}"><span>${s.icon}</span>${s.label}${s.id.startsWith('youtube')?s.id.slice(-1):''}<b>✓</b></label>`).join("");
+ document.getElementById("socialRows").innerHTML=socials.map(s=>`<div class="social-row"><div class="social-name"><span class="mini-icon">${s.icon}</span><div><strong>${s.label}${s.id.startsWith('youtube')?' '+s.id.slice(-1):''}</strong><small>${s.type}</small></div></div><span class="status">● Configurabile</span><button class="ghost compact">Modifica</button></div>`).join("");
+}
+function route(){const admin=location.pathname.replace(/\/+$/,'')==='/admin';document.getElementById('publicApp').hidden=admin;document.getElementById('adminApp').hidden=!admin;if(admin)renderAdmin();else renderPublic()}
+
+document.getElementById('postText').addEventListener('input',e=>document.getElementById('charCount').textContent=e.target.value.length);
+document.getElementById('publishBtn').onclick=()=>alert('Composer pronto. La pubblicazione reale verrà collegata alle API ufficiali.');
 route();
 </script></body></html>
