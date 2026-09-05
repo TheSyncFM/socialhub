@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/31855863/README.md)
+[README.md](https://github.com/user-attachments/files/31855906/README.md)
 # SocialHub V6 — TheSyncFM
 
 Obiettivo:
