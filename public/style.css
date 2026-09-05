@@ -128,3 +128,35 @@
  .public-arrow{font-size:16px}
 }
 .text-input{width:100%;background:#0c0f15;color:#fff;border:1px solid #2a303b;border-radius:8px;padding:9px 10px;font:inherit;outline:none;margin-bottom:9px}.text-input:focus{border-color:#7250d7}.page-editor-grid{display:grid;grid-template-columns:.75fr 1.25fr;gap:18px}.editor-list{display:flex;flex-direction:column;gap:9px;max-height:420px;overflow:auto}.editor-row{display:flex;align-items:flex-start;gap:10px;background:#171b23;border:1px solid #242b35;border-radius:10px;padding:10px}.editor-row>img{width:28px;height:28px;object-fit:contain;flex:0 0 28px}.editor-fields{flex:1}.editor-fields strong{display:block;font-size:11px;margin-bottom:6px}.editor-fields .text-input{margin-bottom:6px;font-size:11px}.social-row-banner .row-banner-preview{width:180px;height:42px;border-radius:8px;background-position:center;background-size:cover;border:1px solid #2b313c;flex:0 0 180px}@media(max-width:900px){.page-editor-grid{grid-template-columns:1fr}.social-row-banner{flex-wrap:wrap}.social-row-banner .row-banner-preview{flex:1 1 100%;width:auto}}
+
+/* V24: artwork fills the entire social card */
+.public-link{background:rgba(9,12,17,.32)!important;}
+.public-link .banner-image{left:0!important;right:0!important;top:0!important;bottom:0!important;}
+.public-link .banner-overlay{left:0!important;right:0!important;top:0!important;bottom:0!important;background:linear-gradient(90deg,rgba(8,10,14,.62),rgba(8,10,14,.30) 55%,rgba(8,10,14,.42))!important;}
+.public-link .public-copy strong,.public-link .public-copy span:not(.public-eyebrow){text-shadow:0 1px 12px rgba(0,0,0,.70);}
+.public-icon{background:rgba(7,10,14,.86)!important;backdrop-filter:blur(7px);}
+
+/* V26 — sfondo pubblico grigio scuro con fumo verde/viola nella parte bassa */
+.publicApp{
+  background:
+    radial-gradient(55% 28% at 18% 100%, rgba(34, 197, 94, .17) 0%, rgba(34,197,94,.08) 28%, transparent 72%),
+    radial-gradient(52% 30% at 82% 100%, rgba(139, 92, 246, .22) 0%, rgba(139,92,246,.10) 28%, transparent 72%),
+    radial-gradient(70% 26% at 50% 105%, rgba(90, 100, 110, .20) 0%, rgba(70,78,88,.10) 34%, transparent 76%),
+    linear-gradient(180deg, #282c32 0%, #24282e 58%, #20242a 100%);
+}
+.publicApp::before{
+  background-image:var(--page-cover);
+  opacity:.055;
+  filter:saturate(.72) blur(3px);
+}
+.publicApp::after{
+  background:
+    radial-gradient(28% 18% at 12% 94%, rgba(90, 98, 108, .28) 0%, rgba(90,98,108,.10) 44%, transparent 76%),
+    radial-gradient(24% 20% at 34% 97%, rgba(70, 80, 92, .26) 0%, rgba(70,80,92,.10) 46%, transparent 78%),
+    radial-gradient(30% 21% at 58% 98%, rgba(72, 80, 92, .24) 0%, rgba(72,80,92,.09) 46%, transparent 78%),
+    radial-gradient(25% 19% at 80% 95%, rgba(104, 94, 120, .24) 0%, rgba(104,94,120,.09) 46%, transparent 78%),
+    radial-gradient(60% 28% at 50% 100%, rgba(14, 18, 24, .10) 0%, rgba(12,15,20,.28) 54%, rgba(8,10,14,.48) 100%),
+    linear-gradient(180deg, rgba(24,27,33,.16) 0%, rgba(24,27,33,.04) 58%, rgba(18,21,27,.18) 100%);
+  filter:blur(10px);
+  transform:scale(1.05);
+}
