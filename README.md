@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/31855796/README.md)
+[README.md](https://github.com/user-attachments/files/31855863/README.md)
 # SocialHub V6 — TheSyncFM
 
 Obiettivo:
@@ -16,3 +16,6 @@ Social previsti:
 Il composer è predisposto per creare un unico post e selezionare più piattaforme. La pubblicazione reale verrà collegata alle API ufficiali una piattaforma alla volta.
 
 Prossimo step: proteggere `/admin` con Cloudflare Access e collegare i dati/API dei singoli account.
+
+
+V10: lo sfondo caricato nel profilo pubblico viene mostrato su tutta la pagina con opacità ridotta e overlay scuro, dando priorità all’immagine profilo e ai banner.
