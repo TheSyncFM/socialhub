@@ -1,1 +1,11 @@
-{"$schema":"https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json","name":"socialhub-web","main":"src/worker.mjs","compatibility_date":"2026-09-04","assets":{"directory":"./public","binding":"ASSETS"},"keep_vars":true}
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+  "name": "socialhub-web",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-09-04",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "keep_vars": true
+}
