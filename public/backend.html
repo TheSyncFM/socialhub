@@ -3,6 +3,51 @@
 <title>SocialHub — Backend</title><link rel="stylesheet" href="/style.css">
 <style>
 .backend-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:16px}.backend-title{display:flex;align-items:center;gap:10px}.backend-title .logo-dot{margin-top:2px}.backend-status{font-size:11px;color:#77cda2;background:#101a16;border:1px solid #214a39;border-radius:999px;padding:7px 10px}.editor-list{display:flex;flex-direction:column;gap:10px}.editor-row{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:start;padding:12px;border:1px solid #242b35;background:#151922;border-radius:10px}.editor-row>img{width:48px;height:48px;object-fit:contain;padding:7px;background:#10131a;border:1px solid #303746;border-radius:12px}.editor-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}.editor-fields strong{grid-column:1/-1;font-size:12px;color:#fff}.text-input{width:100%;background:#0c0f15;color:#fff;border:1px solid #2a303b;border-radius:8px;padding:10px;font:inherit;outline:none}.text-input:focus{border-color:#7250d7}.backend-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.save-note{font-size:10px;color:#6f7785}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.danger{background:#261519!important;border-color:#63313b!important;color:#ffb9c1!important}.backend-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.backend-full{grid-column:1/-1}.stats article{min-height:92px}.section-label{font-size:10px;letter-spacing:1.6px;color:#8b5cf6;font-weight:900;margin:0 0 7px}.mini-preview{height:74px;border-radius:10px;border:1px solid #303746;background:#0d1016 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#707988;font-size:10px;overflow:hidden}.mini-preview img{width:100%;height:100%;object-fit:cover}.admin-note{background:#0f141b;border:1px dashed #2d3541;border-radius:10px;padding:12px;color:#7e8795;font-size:11px;line-height:1.45}.backlink{color:#b79cff;text-decoration:none}.backlink:hover{text-decoration:underline}@media(max-width:900px){.backend-grid{grid-template-columns:1fr}.backend-full{grid-column:auto}.editor-fields{grid-template-columns:1fr}}
+
+/* V20 fixes: banner thumbnails + uniform social marks */
+.mini-preview{
+  width:128px;
+  min-width:128px;
+  height:72px;
+  flex:0 0 128px;
+  border-radius:10px;
+  border:1px solid #303746;
+  background:#0d1016 center/cover no-repeat;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#707988;
+  font-size:10px;
+  overflow:hidden;
+}
+.mini-preview::after{
+  content:"";
+  position:absolute;
+}
+.mini-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.mini-icon img{
+  width:22px !important;
+  height:22px !important;
+  max-width:22px !important;
+  max-height:22px !important;
+  object-fit:contain !important;
+  display:block !important;
+}
+.social-row{gap:12px}
+.social-row .social-name{min-width:0;flex:1}
+.social-row .mini-icon{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;overflow:hidden}
+.target-icon img{
+  width:20px !important;
+  height:20px !important;
+  max-width:20px !important;
+  max-height:20px !important;
+  object-fit:contain !important;
+  display:block !important;
+}
+@media(max-width:720px){
+  .mini-preview{width:96px;min-width:96px;flex-basis:96px;height:60px}
+}
+
 </style></head><body>
 <aside class="sidebar">
   <div class="brand"><span class="logo-dot"></span><span>SocialHub</span></div>
