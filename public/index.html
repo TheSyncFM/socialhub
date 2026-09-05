@@ -55,14 +55,14 @@
 
 <script>
 const socials=[
-{id:"instagram",label:"Instagram personale",icon:"◎",href:"#",type:"Instagram"},
-{id:"youtube1",label:"YouTube — Canale 1",icon:"▶",href:"#",type:"YouTube"},
-{id:"youtube2",label:"YouTube — Canale 2",icon:"▶",href:"#",type:"YouTube"},
-{id:"twitch",label:"Twitch — TheSyncFM",icon:"◉",href:"https://www.twitch.tv/thesyncfm",type:"Twitch"},
-{id:"kick",label:"Kick",icon:"K",href:"#",type:"Kick"},
-{id:"tiktok",label:"TikTok",icon:"♪",href:"#",type:"TikTok"},
-{id:"x",label:"X",icon:"𝕏",href:"#",type:"X"}];
-function renderPublic(){document.getElementById("publicLinks").innerHTML=socials.map(s=>`<a class="public-link" href="${s.href}" ${s.href.startsWith("http")?'target="_blank" rel="noopener"':''}><span class="public-icon">${s.icon}</span><span>${s.label}</span><span>↗</span></a>`).join("")}
+{id:"instagram",label:"Instagram",description:"Seguimi su Instagram",icon:"◎",href:"#",type:"Instagram",theme:"instagram"},
+{id:"youtube1",label:"YouTube — Canale 1",description:"Iscriviti al canale",icon:"▶",href:"#",type:"YouTube",theme:"youtube"},
+{id:"youtube2",label:"YouTube — Canale 2",description:"Iscriviti al secondo canale",icon:"▶",href:"#",type:"YouTube",theme:"youtube"},
+{id:"twitch",label:"Twitch — TheSyncFM",description:"Seguimi e guarda le LIVE",icon:"◉",href:"https://www.twitch.tv/thesyncfm",type:"Twitch",theme:"twitch"},
+{id:"kick",label:"Kick",description:"Seguimi su Kick",icon:"K",href:"#",type:"Kick",theme:"kick"},
+{id:"tiktok",label:"TikTok",description:"Seguimi su TikTok",icon:"♪",href:"#",type:"TikTok",theme:"tiktok"},
+{id:"x",label:"X",description:"Seguimi su X",icon:"𝕏",href:"#",type:"X",theme:"x"}];
+function renderPublic(){document.getElementById("publicLinks").innerHTML=socials.map(s=>`<a class="public-link ${s.theme}" href="${s.href}" ${s.href.startsWith("http")?'target="_blank" rel="noopener"':''} aria-label="${s.label}"><span class="public-icon">${s.icon}</span><span class="public-copy"><strong>${s.label}</strong><small>${s.description}</small></span><span class="public-arrow">→</span></a>`).join("")}
 function renderAdmin(){
  document.getElementById("targetList").innerHTML=socials.map(s=>`<label class="target"><input type="checkbox" checked data-id="${s.id}"><span>${s.icon}</span>${s.label}<b>✓</b></label>`).join("");
  document.getElementById("socialRows").innerHTML=socials.map(s=>`<div class="social-row"><div class="social-name"><span class="mini-icon">${s.icon}</span><div><strong>${s.label}</strong><small>${s.type}</small></div></div><span class="status">● Configurabile</span><button class="ghost compact">Modifica</button></div>`).join("");
