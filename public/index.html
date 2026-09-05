@@ -5,7 +5,7 @@
 <div id="publicApp">
   <div class="public-wrap">
     <div class="public-top"><div class="logo"><span class="logo-dot"></span>TheSyncFM</div><span class="live-pill">● LIVE INFO</span></div>
-    <section class="hero" id="profileHero"><div class="hero-cover" aria-hidden="true"></div><div class="hero-avatar-wrap"><img id="publicAvatar" class="hero-avatar-img" alt="Profilo TheSyncFM"><div id="publicAvatarFallback" class="hero-avatar">TS</div></div><h1>TheSyncFM</h1><p>Seguici su tutti i nostri canali.</p></section>
+    <section class="hero" id="profileHero"><div class="hero-avatar-wrap"><div id="publicAvatarFallback" class="hero-avatar">TS</div><img id="publicAvatar" class="hero-avatar-img" alt="Profilo TheSyncFM"></div><h1>TheSyncFM</h1><p>Seguici su tutti i nostri canali.</p></section>
     <div class="link-grid" id="publicLinks"></div><footer>SocialHub · TheSyncFM</footer>
   </div>
 </div>
@@ -72,6 +72,7 @@ function applyProfile(){
  const avatar=document.getElementById("publicAvatar");
  const fallback=document.getElementById("publicAvatarFallback");
  if(!app||!hero||!avatar||!fallback)return;
+ avatar.onerror=()=>{avatar.hidden=true;fallback.hidden=false;};
  if(profileState.cover){app.style.setProperty("--page-cover",`url(${profileState.cover})`);app.classList.add("has-page-cover");}else{app.style.removeProperty("--page-cover");app.classList.remove("has-page-cover");}
  hero.classList.remove("has-cover");hero.style.removeProperty("--cover-image");
  if(profileState.avatar){avatar.src=profileState.avatar;avatar.hidden=false;fallback.hidden=true;}else{avatar.hidden=true;fallback.hidden=false;}
