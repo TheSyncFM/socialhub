@@ -54,115 +54,19 @@
 
 <script>
 const socials=[
-  {id:"instagram",label:"Instagram",description:"Seguimi su Instagram",icon:"/assets/icons/instagram.svg",href:"#",type:"Instagram",theme:"instagram",eyebrow:"SOCIAL",banner:"/assets/banners/instagram.png"},
-  {id:"youtube1",label:"YouTube",description:"Iscriviti al canale principale",icon:"/assets/icons/youtube.svg",href:"#",type:"YouTube",theme:"youtube",eyebrow:"CANALE 01",banner:"/assets/banners/youtube.png"},
-  {id:"youtube2",label:"YouTube",description:"Iscriviti al secondo canale",icon:"/assets/icons/youtube.svg",href:"#",type:"YouTube",theme:"youtube",eyebrow:"CANALE 02",banner:"/assets/banners/youtube.png"},
-  {id:"twitch",label:"Twitch",description:"Seguimi e guarda le LIVE",icon:"/assets/icons/twitch.svg",href:"https://www.twitch.tv/thesyncfm",type:"Twitch",theme:"twitch",eyebrow:"LIVE STREAM",banner:"/assets/banners/twitch.png"},
-  {id:"kick",label:"Kick",description:"Seguimi su Kick",icon:"/assets/icons/kick.svg",href:"#",type:"Kick",theme:"kick",eyebrow:"LIVE STREAM",banner:"/assets/banners/kick.png"},
-  {id:"tiktok",label:"TikTok",description:"Seguimi su TikTok",icon:"/assets/icons/tiktok.svg",href:"#",type:"TikTok",theme:"tiktok",eyebrow:"SHORT CONTENT",banner:"/assets/banners/tiktok.png"},
-  {id:"x",label:"X",description:"Seguimi su X",icon:"/assets/icons/x-twitter.svg",href:"#",type:"X",theme:"x",eyebrow:"SOCIAL",banner:"/assets/banners/x.png"}
+{id:"instagram",label:"Instagram",description:"Seguimi su Instagram",icon:"/assets/icons/instagram.svg",href:"#",theme:"instagram",eyebrow:"SOCIAL",banner:"/assets/banners/instagram.png"},
+{id:"youtube1",label:"YouTube",description:"Iscriviti al canale principale",icon:"/assets/icons/youtube.svg",href:"#",theme:"youtube",eyebrow:"CANALE 01",banner:"/assets/banners/youtube.png"},
+{id:"youtube2",label:"YouTube",description:"Iscriviti al secondo canale",icon:"/assets/icons/youtube.svg",href:"#",theme:"youtube",eyebrow:"CANALE 02",banner:"/assets/banners/youtube.png"},
+{id:"twitch",label:"Twitch",description:"Seguimi e guarda le LIVE",icon:"/assets/icons/twitch.svg",href:"https://www.twitch.tv/thesyncfm",theme:"twitch",eyebrow:"LIVE STREAM",banner:"/assets/banners/twitch.png"},
+{id:"kick",label:"Kick",description:"Seguimi su Kick",icon:"/assets/icons/kick.svg",href:"#",theme:"kick",eyebrow:"LIVE STREAM",banner:"/assets/banners/kick.png"},
+{id:"tiktok",label:"TikTok",description:"Seguimi su TikTok",icon:"/assets/icons/tiktok.svg",href:"#",theme:"tiktok",eyebrow:"SHORT CONTENT",banner:"/assets/banners/tiktok.png"},
+{id:"x",label:"X",description:"Seguimi su X",icon:"/assets/icons/x-twitter.svg",href:"#",theme:"x",eyebrow:"SOCIAL",banner:"/assets/banners/x.png"}
 ];
-
-const PAGE_KEY="socialhub-page-v1";
-const pageState=JSON.parse(localStorage.getItem(PAGE_KEY)||"{}");
-function savePage(){localStorage.setItem(PAGE_KEY,JSON.stringify(pageState));renderPublic();renderPageAdmin();}
-const BANNER_KEY="socialhub-banners-v1";
-const bannerState=JSON.parse(localStorage.getItem(BANNER_KEY)||"{}");
-function saveBanners(){localStorage.setItem(BANNER_KEY,JSON.stringify(bannerState));renderPublic();renderAdmin();}
-
-const PROFILE_KEY="socialhub-profile-v1";
-const profileState=JSON.parse(localStorage.getItem(PROFILE_KEY)||"{}");
-function saveProfile(){localStorage.setItem(PROFILE_KEY,JSON.stringify(profileState)); applyProfile(); renderAdminProfile();}
-function applyProfile(){
- const app=document.getElementById("publicApp");
- const hero=document.getElementById("profileHero");
- const avatar=document.getElementById("publicAvatar");
- const fallback=document.getElementById("publicAvatarFallback");
- if(!app||!hero||!avatar||!fallback)return;
- avatar.onerror=()=>{avatar.hidden=true;fallback.hidden=false;};
- if(profileState.cover){app.style.setProperty("--page-cover",`url(${profileState.cover})`);app.classList.add("has-page-cover");}else{app.style.removeProperty("--page-cover");app.classList.remove("has-page-cover");}
- hero.classList.remove("has-cover");hero.style.removeProperty("--cover-image");
- if(profileState.avatar){avatar.src=profileState.avatar;avatar.hidden=false;fallback.hidden=true;}else{avatar.hidden=true;fallback.hidden=false;}
-}
-function renderAdminProfile(){
- const img=document.getElementById("adminAvatarPreview"), fb=document.getElementById("adminAvatarFallback"), cp=document.getElementById("adminCoverPreview"), ph=document.getElementById("adminCoverPlaceholder");
- if(!img||!fb||!cp||!ph)return;
- if(profileState.avatar){img.src=profileState.avatar;img.hidden=false;fb.hidden=true;}else{img.hidden=true;fb.hidden=false;}
- if(profileState.cover){cp.style.backgroundImage=`url(${profileState.cover})`;ph.hidden=true;}else{cp.style.backgroundImage="";ph.hidden=false;}
-}
-function readImage(file,cb){ if(!file)return; if(!/^image\/(png|jpeg|webp)$/.test(file.type)){alert("Formato non supportato. Usa PNG, JPG o WebP.");return;} if(file.size>6*1024*1024){alert("Immagine troppo grande. Massimo 6 MB.");return;} const r=new FileReader();r.onload=()=>cb(r.result);r.readAsDataURL(file);}
-function setupProfileAdmin(){
- document.getElementById("avatarInput")?.addEventListener("change",e=>readImage(e.target.files[0],v=>{profileState.avatar=v;saveProfile();}));
- document.getElementById("coverInput")?.addEventListener("change",e=>readImage(e.target.files[0],v=>{profileState.cover=v;saveProfile();}));
- document.getElementById("removeAvatar")?.addEventListener("click",()=>{delete profileState.avatar;saveProfile();});
- document.getElementById("removeCover")?.addEventListener("click",()=>{delete profileState.cover;saveProfile();});
- renderAdminProfile();
-}
-
-function renderPageAdmin(){
-  const ti=document.getElementById("pageTitleInput"), bi=document.getElementById("pageBioInput"), list=document.getElementById("pageSocialEditor");
-  if(!ti||!bi||!list)return;
-  ti.value=pageState.title||"TheSyncFM"; bi.value=pageState.bio||"Seguici su tutti i nostri canali.";
-  ti.oninput=e=>{pageState.title=e.target.value;savePage();};
-  bi.oninput=e=>{pageState.bio=e.target.value;savePage();};
-  list.innerHTML=socials.map(s=>{
-    const cfg=(pageState.socials||{})[s.id]||{};
-    return `<div class="editor-row"><img src="${s.icon}" alt=""><div class="editor-fields"><strong>${s.label}${s.id.startsWith("youtube")?' '+s.id.slice(-1):''}</strong><input class="text-input" data-url-id="${s.id}" type="url" value="${cfg.href??s.href}" placeholder="https://..."><input class="text-input" data-desc-id="${s.id}" type="text" value="${cfg.description??s.description}" placeholder="Descrizione banner"></div></div>`;
-  }).join("");
-  list.querySelectorAll('[data-url-id]').forEach(i=>i.oninput=e=>{pageState.socials=pageState.socials||{};pageState.socials[e.target.dataset.urlId]=pageState.socials[e.target.dataset.urlId]||{};pageState.socials[e.target.dataset.urlId].href=e.target.value;savePage();});
-  list.querySelectorAll('[data-desc-id]').forEach(i=>i.oninput=e=>{pageState.socials=pageState.socials||{};pageState.socials[e.target.dataset.descId]=pageState.socials[e.target.dataset.descId]||{};pageState.socials[e.target.dataset.descId].description=e.target.value;savePage();});
-}
-
-function renderPublic(){
-  const container=document.getElementById("publicLinks");
-  if(!container)return;
-  document.getElementById("publicTitle").textContent=pageState.title||"TheSyncFM";
-  document.getElementById("publicBio").textContent=pageState.bio||"Seguici su tutti i nostri canali.";
-  container.innerHTML=socials.map(s=>{
-    const cfg=(pageState.socials||{})[s.id]||{};
-    const href=cfg.href??s.href, description=cfg.description??s.description;
-    const bg=bannerState[s.id]||s.banner;
-    return `<a class="public-link ${s.theme}" href="${href}" style="--banner-image:url("${bg}")" ${href.startsWith("http")?'target="_blank" rel="noopener noreferrer"':''} aria-label="${s.label}">
-      <span class="banner-image" aria-hidden="true"></span>
-      <span class="banner-overlay" aria-hidden="true"></span>
-      <span class="public-glow"></span>
-      <span class="public-icon" aria-hidden="true"><img src="${s.icon}" alt=""></span>
-      <span class="public-copy">
-        <small class="public-eyebrow">${s.eyebrow}</small>
-        <strong>${s.label}</strong>
-        <span>${description}</span>
-      </span>
-      ${s.id==='twitch'?'<span class="banner-tag">LIVE</span>':''}
-      <span class="public-arrow" aria-hidden="true">→</span>
-    </a>`;
-  }).join("");
-}
-
-function renderAdmin(){
- renderPageAdmin();
- setupProfileAdmin();
- document.getElementById("targetList").innerHTML=socials.map(s=>`<label class="target"><input type="checkbox" checked data-id="${s.id}"><span class="target-icon"><img src="${s.icon}" alt=""></span>${s.label}${s.id.startsWith('youtube')?s.id.slice(-1):''}<b>✓</b></label>`).join("");
- document.getElementById("socialRows").innerHTML=socials.map(s=>{
-   const bg=bannerState[s.id]||s.banner;
-   return `<div class="social-row social-row-banner" data-social-id="${s.id}">
-     <div class="social-name"><span class="mini-icon"><img src="${s.icon}" alt=""></span><div><strong>${s.label}${s.id.startsWith('youtube')?' '+s.id.slice(-1):''}</strong><small>${s.type}</small></div></div>
-     <div class="row-banner-preview" style="background-image:linear-gradient(90deg,rgba(9,11,16,.15),rgba(9,11,16,.45)),url("${bg}")"></div>
-     <label class="ghost compact file-btn banner-file-btn">Immagine<input type="file" accept="image/png,image/jpeg,image/webp" data-banner-input="${s.id}"></label>
-     <button class="ghost compact" data-banner-reset="${s.id}">Reset</button>
-   </div>`;
- }).join("");
- document.querySelectorAll('[data-banner-input]').forEach(input=>input.addEventListener('change',e=>{
-   readImage(e.target.files[0],v=>{bannerState[e.target.dataset.bannerInput]=v;saveBanners();});
- }));
- document.querySelectorAll('[data-banner-reset]').forEach(btn=>btn.addEventListener('click',()=>{delete bannerState[btn.dataset.bannerReset];saveBanners();}));
-}
-
-function route(){const admin=location.pathname.replace(/\/+$/,'')==='/admin';document.getElementById('publicApp').hidden=admin;document.getElementById('adminApp').hidden=!admin;if(admin)renderAdmin();else renderPublic()}
-
-document.getElementById('postText').addEventListener('input',e=>document.getElementById('charCount').textContent=e.target.value.length);
-document.getElementById('publishBtn').onclick=()=>alert('Composer pronto. La pubblicazione reale verrà collegata alle API ufficiali.');
-
-const syncChannel = "BroadcastChannel" in window ? new BroadcastChannel("socialhub-sync") : null;
-syncChannel?.addEventListener("message", e => { if (e.data?.type === "refresh") { location.reload(); } });
-route();
+let config={page:{},socials:{},media:{}};
+function mediaUrl(key){return config.media?.[key]?`/api/media/${encodeURIComponent(key)}?v=${config.updatedAt||Date.now()}`:null;}
+async function loadConfig(){try{const r=await fetch('/api/config',{cache:'no-store'});if(r.ok){const d=await r.json();if(d.ok)config=d.config||config;}}catch(e){console.warn(e)}renderPublic();applyProfile();}
+function applyProfile(){const app=document.getElementById('publicApp'),avatar=document.getElementById('publicAvatar'),fallback=document.getElementById('publicAvatarFallback');const av=mediaUrl('profile-avatar'),cover=mediaUrl('profile-cover');if(cover){app.style.setProperty('--page-cover',`url("${cover}")`);app.classList.add('has-page-cover')}else{app.style.removeProperty('--page-cover');app.classList.remove('has-page-cover')}if(av){avatar.src=av;avatar.hidden=false;fallback.hidden=true}else{avatar.hidden=true;fallback.hidden=false}avatar.onerror=()=>{avatar.hidden=true;fallback.hidden=false};}
+function renderPublic(){document.getElementById('publicTitle').textContent=config.page?.title||'TheSyncFM';document.getElementById('publicBio').textContent=config.page?.bio||'Seguici su tutti i nostri canali.';const c=document.getElementById('publicLinks');c.innerHTML=socials.map(s=>{const cfg=config.socials?.[s.id]||{};const href=cfg.href??s.href,desc=cfg.description??s.description,bg=mediaUrl('banner-'+s.id)||s.banner;return `<a class="public-link ${s.theme}" href="${href}" style="--banner-image:url("${bg}")" ${href.startsWith('http')?'target="_blank" rel="noopener noreferrer"':''} aria-label="${s.label}"><span class="banner-image" aria-hidden="true"></span><span class="banner-overlay" aria-hidden="true"></span><span class="public-glow"></span><span class="public-icon" aria-hidden="true"><img src="${s.icon}" alt=""></span><span class="public-copy"><small class="public-eyebrow">${s.eyebrow}</small><strong>${s.label}</strong><span>${escapeHtml(desc)}</span></span>${s.id==='twitch'?'<span class="banner-tag">LIVE</span>':''}<span class="public-arrow" aria-hidden="true">→</span></a>`}).join('');}
+function escapeHtml(v){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');}
+loadConfig();setInterval(loadConfig,15000);
 </script></body></html>
