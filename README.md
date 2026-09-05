@@ -1,21 +1,11 @@
-[README.md](https://github.com/user-attachments/files/31855906/README.md)
-# SocialHub V6 — TheSyncFM
+[README.md](https://github.com/user-attachments/files/31855997/README.md)
+# SocialHub TheSyncFM V12
 
-Obiettivo:
-- `/` = pagina pubblica/link-in-bio per gli spettatori, senza login.
-- `/admin` = pannello privato destinato alla gestione.
-
-Social previsti:
-- 1 Instagram personale
-- 2 canali YouTube
-- 1 Twitch
-- 1 Kick
-- 1 TikTok
-- 1 X
-
-Il composer è predisposto per creare un unico post e selezionare più piattaforme. La pubblicazione reale verrà collegata alle API ufficiali una piattaforma alla volta.
-
-Prossimo step: proteggere `/admin` con Cloudflare Access e collegare i dati/API dei singoli account.
-
-
-V10: lo sfondo caricato nel profilo pubblico viene mostrato su tutta la pagina con opacità ridotta e overlay scuro, dando priorità all’immagine profilo e ai banner.
+- `/` = public link-in-bio page.
+- `/admin` = private control center (protect with Cloudflare Access before treating it as secure).
+- Public banners now use animated branded artwork backgrounds with local assets.
+- Social marks are bundled locally as SVG assets for Instagram, YouTube, Twitch, TikTok and X; Kick uses a bundled Kick-style mark.
+- Admin can upload a custom background image for each banner; reset restores the bundled default.
+- Profile avatar and page background remain configurable from `/admin`.
+- Current profile/banner settings are stored in browser localStorage. Cloudflare persistence is a later step.
+- Real publishing/API integrations are not enabled yet.
