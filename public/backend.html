@@ -1,0 +1,77 @@
+<!doctype html><html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SocialHub — Backend</title><link rel="stylesheet" href="/style.css">
+<style>
+.backend-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:16px}.backend-title{display:flex;align-items:center;gap:10px}.backend-title .logo-dot{margin-top:2px}.backend-status{font-size:11px;color:#77cda2;background:#101a16;border:1px solid #214a39;border-radius:999px;padding:7px 10px}.editor-list{display:flex;flex-direction:column;gap:10px}.editor-row{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:start;padding:12px;border:1px solid #242b35;background:#151922;border-radius:10px}.editor-row>img{width:48px;height:48px;object-fit:contain;padding:7px;background:#10131a;border:1px solid #303746;border-radius:12px}.editor-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}.editor-fields strong{grid-column:1/-1;font-size:12px;color:#fff}.text-input{width:100%;background:#0c0f15;color:#fff;border:1px solid #2a303b;border-radius:8px;padding:10px;font:inherit;outline:none}.text-input:focus{border-color:#7250d7}.backend-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.save-note{font-size:10px;color:#6f7785}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.danger{background:#261519!important;border-color:#63313b!important;color:#ffb9c1!important}.backend-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.backend-full{grid-column:1/-1}.stats article{min-height:92px}.section-label{font-size:10px;letter-spacing:1.6px;color:#8b5cf6;font-weight:900;margin:0 0 7px}.mini-preview{height:74px;border-radius:10px;border:1px solid #303746;background:#0d1016 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#707988;font-size:10px;overflow:hidden}.mini-preview img{width:100%;height:100%;object-fit:cover}.admin-note{background:#0f141b;border:1px dashed #2d3541;border-radius:10px;padding:12px;color:#7e8795;font-size:11px;line-height:1.45}.backlink{color:#b79cff;text-decoration:none}.backlink:hover{text-decoration:underline}@media(max-width:900px){.backend-grid{grid-template-columns:1fr}.backend-full{grid-column:auto}.editor-fields{grid-template-columns:1fr}}
+</style></head><body>
+<aside class="sidebar">
+  <div class="brand"><span class="logo-dot"></span><span>SocialHub</span></div>
+  <div class="workspace">THESYNCFM <span>BACKEND</span></div>
+  <nav>
+    <a class="active" href="#dashboard">⌂ <span>Dashboard</span></a>
+    <a href="#page">◫ <span>Pagina pubblica</span></a>
+    <a href="#profile">◉ <span>Profilo</span></a>
+    <a href="#banners">▣ <span>Banner</span></a>
+    <a href="#composer">✎ <span>Crea post</span></a>
+    <a href="#socials">◎ <span>Social</span></a>
+  </nav>
+</aside>
+<main>
+  <header class="backend-top" id="dashboard"><div><div class="eyebrow">PRIVATE BACKEND</div><h1>Control Center</h1><p class="muted">Questo è il pannello separato della tua pagina TheSyncFM.</p></div><div class="backend-actions"><span class="backend-status">● Backend online</span><a class="ghost" href="/">Apri pagina pubblica ↗</a></div></header>
+
+  <section class="notice"><div><strong>Pagina pubblica ↔ Backend</strong><span>Le impostazioni condividono lo stesso storage del browser. Nessun /admin necessario.</span></div><button class="ghost" id="refreshPublic">Aggiorna pagina pubblica ↗</button></section>
+
+  <section class="backend-grid" id="page">
+    <section class="card backend-full"><div class="card-head"><div><h2>Pagina pubblica</h2><p class="muted">Modifica ciò che vedono i visitatori.</p></div><span class="muted">Contenuti</span></div>
+      <div class="two-col" style="grid-template-columns:1fr 1fr;gap:18px">
+        <div><label>Titolo</label><input id="pageTitle" class="text-input" type="text"><label style="margin-top:12px">Descrizione</label><input id="pageBio" class="text-input" type="text"></div>
+        <div class="admin-note"><strong>Social configurati</strong><br>Instagram · YouTube 1 · YouTube 2 · Twitch · Kick · TikTok · X<br><br>Imposta URL e descrizione direttamente per ogni banner qui sotto.</div>
+      </div>
+      <div class="backend-actions" style="margin-top:14px"><button class="primary" id="savePageBtn">Salva pagina</button><span class="save-note" id="pageSaveNote"></span></div>
+    </section>
+
+    <section class="card backend-full"><div class="card-head"><div><h2>Link e testo dei social</h2><p class="muted">Queste impostazioni alimentano direttamente i banner della home.</p></div></div><div class="editor-list" id="socialEditor"></div></section>
+
+    <section class="card" id="profile"><div class="card-head"><div><h2>Profilo pubblico</h2><p class="muted">Immagine profilo e sfondo dell'intera pagina.</p></div></div>
+      <div class="upload-box"><div class="upload-preview"><img id="avatarPreview" alt="Profilo"><span id="avatarFallback">TS</span></div><div class="upload-copy"><strong>Immagine profilo</strong><small>PNG, JPG o WebP · max 6 MB</small><div class="upload-actions"><label class="primary file-btn">Scegli<input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp"></label><button class="ghost compact" id="removeAvatar">Rimuovi</button></div></div></div>
+      <div class="upload-box cover-box" style="margin-top:10px"><div class="cover-preview" id="coverPreview"><span id="coverPlaceholder">Sfondo pagina</span></div><div class="upload-copy"><strong>Sfondo pagina</strong><small>Immagine larga · max 6 MB</small><div class="upload-actions"><label class="primary file-btn">Scegli<input id="coverInput" type="file" accept="image/png,image/jpeg,image/webp"></label><button class="ghost compact" id="removeCover">Rimuovi</button></div></div></div>
+    </section>
+
+    <section class="card" id="banners"><div class="card-head"><div><h2>Immagine dei banner</h2><p class="muted">Scegli l'immagine dinamica di ogni social.</p></div></div><div id="bannerEditor"></div></section>
+
+    <section class="card backend-full" id="composer"><div class="card-head"><div><h2>Crea un post</h2><p class="muted">Scrivi una volta e seleziona i social.</p></div><span class="muted">Composer</span></div><div class="composer-grid"><div><label>Testo</label><textarea id="postText" placeholder="Scrivi qui il contenuto..."></textarea><div class="counter"><span id="charCount">0</span> caratteri</div></div><div><label>Pubblica su</label><div class="target-list" id="targetList"></div><button class="primary wide" id="publishBtn">Pubblica su selezionati</button><p class="helper">La pubblicazione reale verrà collegata alle API ufficiali delle singole piattaforme.</p></div></div></section>
+
+    <section class="card" id="socials"><div class="card-head"><div><h2>Account</h2><p class="muted">Stato attuale della configurazione.</p></div></div><div class="stats" style="grid-template-columns:repeat(2,1fr);margin:0"><article><span class="stat-icon twitch">◉</span><div><span class="label">Twitch</span><strong>—</strong><small>followers</small></div></article><article><span class="stat-icon yt">▶</span><div><span class="label">YouTube 1</span><strong>—</strong><small>iscritti</small></div></article><article><span class="stat-icon yt">▶</span><div><span class="label">YouTube 2</span><strong>—</strong><small>iscritti</small></div></article><article><span class="stat-icon ig">◎</span><div><span class="label">Instagram</span><strong>—</strong><small>followers</small></div></article></div></section>
+
+    <section class="card"><div class="card-head"><div><h2>Accesso rapido</h2><p class="muted">Collegamenti del progetto.</p></div></div><div class="toolbar"><a class="ghost" href="/">Pagina pubblica</a><button class="ghost" id="clearPage">Ripristina testi</button><button class="ghost danger" id="clearAll">Cancella configurazione locale</button></div><p class="helper">L'area non è ancora autenticata: quando avremo collegato Cloudflare Access potrai proteggerla con il tuo account.</p></section>
+  </section>
+</main>
+<script>
+const socials=[
+{id:"instagram",label:"Instagram",description:"Seguimi su Instagram",icon:"/assets/icons/instagram.svg",href:"#",theme:"instagram",eyebrow:"SOCIAL",banner:"/assets/banners/instagram.png"},
+{id:"youtube1",label:"YouTube 1",description:"Iscriviti al canale principale",icon:"/assets/icons/youtube.svg",href:"#",theme:"youtube",eyebrow:"CANALE 01",banner:"/assets/banners/youtube.png"},
+{id:"youtube2",label:"YouTube 2",description:"Iscriviti al secondo canale",icon:"/assets/icons/youtube.svg",href:"#",theme:"youtube",eyebrow:"CANALE 02",banner:"/assets/banners/youtube.png"},
+{id:"twitch",label:"Twitch",description:"Seguimi e guarda le LIVE",icon:"/assets/icons/twitch.svg",href:"https://www.twitch.tv/thesyncfm",theme:"twitch",eyebrow:"LIVE STREAM",banner:"/assets/banners/twitch.png"},
+{id:"kick",label:"Kick",description:"Seguimi su Kick",icon:"/assets/icons/kick.svg",href:"#",theme:"kick",eyebrow:"LIVE STREAM",banner:"/assets/banners/kick.png"},
+{id:"tiktok",label:"TikTok",description:"Seguimi su TikTok",icon:"/assets/icons/tiktok.svg",href:"#",theme:"tiktok",eyebrow:"SHORT CONTENT",banner:"/assets/banners/tiktok.png"},
+{id:"x",label:"X",description:"Seguimi su X",icon:"/assets/icons/x-twitter.svg",href:"#",theme:"x",eyebrow:"SOCIAL",banner:"/assets/banners/x.png"}
+];
+const PAGE_KEY="socialhub-page-v1",BANNER_KEY="socialhub-banners-v1",PROFILE_KEY="socialhub-profile-v1";
+let pageState=JSON.parse(localStorage.getItem(PAGE_KEY)||"{}"),bannerState=JSON.parse(localStorage.getItem(BANNER_KEY)||"{}"),profileState=JSON.parse(localStorage.getItem(PROFILE_KEY)||"{}");
+const channel = "BroadcastChannel" in window ? new BroadcastChannel("socialhub-sync") : null;
+function notify(){channel?.postMessage({type:"refresh"});}
+function readImage(file,cb){if(!file)return;if(!/^image\/(png|jpeg|webp)$/.test(file.type)){alert("Formato non supportato. Usa PNG, JPG o WebP.");return}if(file.size>6*1024*1024){alert("Immagine troppo grande. Massimo 6 MB.");return}const r=new FileReader();r.onload=()=>cb(r.result);r.readAsDataURL(file)}
+function saveAll(){localStorage.setItem(PAGE_KEY,JSON.stringify(pageState));localStorage.setItem(BANNER_KEY,JSON.stringify(bannerState));localStorage.setItem(PROFILE_KEY,JSON.stringify(profileState));notify();}
+function renderPage(){document.getElementById("pageTitle").value=pageState.title||"TheSyncFM";document.getElementById("pageBio").value=pageState.bio||"Seguici su tutti i nostri canali."}
+function renderSocials(){document.getElementById("socialEditor").innerHTML=socials.map(s=>{const c=(pageState.socials||{})[s.id]||{};return `<div class="editor-row"><img src="${s.icon}" alt=""><div class="editor-fields"><strong>${s.label}</strong><input class="text-input" data-href="${s.id}" value="${c.href??s.href}" type="url" placeholder="https://..."><input class="text-input" data-desc="${s.id}" value="${c.description??s.description}" type="text" placeholder="Descrizione"></div></div>`}).join("")}
+function renderProfile(){const ap=document.getElementById("avatarPreview"),af=document.getElementById("avatarFallback"),cp=document.getElementById("coverPreview"),ph=document.getElementById("coverPlaceholder");if(profileState.avatar){ap.src=profileState.avatar;ap.hidden=false;af.hidden=true}else{ap.hidden=true;af.hidden=false}if(profileState.cover){cp.style.backgroundImage=`url(${profileState.cover})`;ph.hidden=true}else{cp.style.backgroundImage="";ph.hidden=false}}
+function renderBanners(){document.getElementById("bannerEditor").innerHTML=socials.map(s=>{const bg=bannerState[s.id]||s.banner;return `<div class="social-row"><div class="social-name"><span class="mini-icon"><img src="${s.icon}" alt=""></span><div><strong>${s.label}</strong><small>Immagine banner</small></div></div><div class="mini-preview" style="background-image:linear-gradient(90deg,rgba(9,11,16,.18),rgba(9,11,16,.35)),url('${bg}')"></div><label class="ghost compact file-btn">Scegli<input type="file" accept="image/png,image/jpeg,image/webp" data-banner="${s.id}"></label><button class="ghost compact" data-reset="${s.id}">Reset</button></div>`}).join("");document.querySelectorAll('[data-banner]').forEach(i=>i.onchange=e=>readImage(e.target.files[0],v=>{bannerState[e.target.dataset.banner]=v;saveAll();renderBanners()}));document.querySelectorAll('[data-reset]').forEach(b=>b.onclick=()=>{delete bannerState[b.dataset.reset];saveAll();renderBanners()})}
+function renderTargets(){document.getElementById("targetList").innerHTML=socials.map(s=>`<label class="target"><input type="checkbox" checked><span class="target-icon"><img src="${s.icon}" alt=""></span>${s.label}<b>✓</b></label>`).join("")}
+function init(){renderPage();renderSocials();renderProfile();renderBanners();renderTargets();document.getElementById("pageSaveNote").textContent=""}
+
+document.getElementById("savePageBtn").onclick=()=>{pageState.title=document.getElementById("pageTitle").value.trim()||"TheSyncFM";pageState.bio=document.getElementById("pageBio").value.trim()||"Seguici su tutti i nostri canali.";saveAll();document.getElementById("pageSaveNote").textContent="Salvato ✓";setTimeout(()=>document.getElementById("pageSaveNote").textContent="",1600)};
+document.getElementById("socialEditor").addEventListener("input",e=>{if(e.target.dataset.href||e.target.dataset.desc){pageState.socials=pageState.socials||{};const id=e.target.dataset.href||e.target.dataset.desc;pageState.socials[id]=pageState.socials[id]||{};if(e.target.dataset.href)pageState.socials[id].href=e.target.value;else pageState.socials[id].description=e.target.value;saveAll()}});
+document.getElementById("avatarInput").onchange=e=>readImage(e.target.files[0],v=>{profileState.avatar=v;saveAll();renderProfile()});document.getElementById("coverInput").onchange=e=>readImage(e.target.files[0],v=>{profileState.cover=v;saveAll();renderProfile()});document.getElementById("removeAvatar").onclick=()=>{delete profileState.avatar;saveAll();renderProfile()};document.getElementById("removeCover").onclick=()=>{delete profileState.cover;saveAll();renderProfile()};
+document.getElementById("postText").oninput=e=>document.getElementById("charCount").textContent=e.target.value.length;document.getElementById("publishBtn").onclick=()=>alert("Composer pronto. La pubblicazione reale sarà collegata alle API ufficiali.");document.getElementById("refreshPublic").onclick=()=>window.open("/","_blank");document.getElementById("clearPage").onclick=()=>{delete pageState.title;delete pageState.bio;delete pageState.socials;saveAll();init()};document.getElementById("clearAll").onclick=()=>{if(confirm("Cancellare tutte le impostazioni salvate nel browser?")){localStorage.removeItem(PAGE_KEY);localStorage.removeItem(BANNER_KEY);localStorage.removeItem(PROFILE_KEY);pageState={};bannerState={};profileState={};notify();init()}};
+init();
+</script></body></html>
