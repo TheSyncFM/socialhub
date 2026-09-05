@@ -55,7 +55,7 @@ export default {
 
 
 const PLATFORM_SETUP = {
-  instagram: "Instagram: per dati e pubblicazione serve un account professionale e un'app Meta configurata.",
+  instagram: "Instagram: puoi usare un account personale con configurazione manuale oppure un account professionale per le integrazioni API.",
   youtube1: "YouTube 1: configura le credenziali OAuth Google (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET).",
   youtube2: "YouTube 2: usa la stessa autorizzazione Google; il backend permette di gestire due canali.",
   twitch: "Twitch: configura TWITCH_CLIENT_ID e TWITCH_CLIENT_SECRET (la tua app Twitch esistente può essere riutilizzata).",
@@ -68,7 +68,7 @@ async function startAccountConnection(id, env, url){
   const allowed = ["instagram","youtube1","youtube2","twitch","kick","tiktok","x"];
   if(!allowed.includes(id)) return json({ok:false,error:"Account non riconosciuto"},400);
   if(id === "x") return json({ok:false,error:PLATFORM_SETUP.x},402);
-  if(id === "instagram") return json({ok:false,error:PLATFORM_SETUP.instagram},503);
+  if(id === "instagram") return json({ok:false,error:"Instagram è configurabile dal pannello: scegli Personale per inserire manualmente profilo e link, oppure Professionale per predisporre il collegamento API."},409);
   if(id === "twitch"){
     if(!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) return json({ok:false,error:PLATFORM_SETUP.twitch},503);
     const state = crypto.randomUUID();
