@@ -5,7 +5,7 @@
 <div id="publicApp">
   <div class="public-wrap">
     <div class="public-top"><div class="logo"><span class="logo-dot"></span>TheSyncFM</div><span class="live-pill">● LIVE INFO</span></div>
-    <section class="hero"><div class="hero-avatar">TS</div><h1>TheSyncFM</h1><p>Seguici su tutti i nostri canali.</p></section>
+    <section class="hero" id="profileHero"><div class="hero-cover" aria-hidden="true"></div><div class="hero-avatar-wrap"><img id="publicAvatar" class="hero-avatar-img" alt="Profilo TheSyncFM"><div id="publicAvatarFallback" class="hero-avatar">TS</div></div><h1>TheSyncFM</h1><p>Seguici su tutti i nostri canali.</p></section>
     <div class="link-grid" id="publicLinks"></div><footer>SocialHub · TheSyncFM</footer>
   </div>
 </div>
@@ -47,7 +47,7 @@
       <section class="card" id="calendar"><div class="card-head"><div><h2>Prossime live</h2><p class="muted">Programmazione</p></div></div><div class="event"><div class="date"><b>04</b><span>SET</span></div><div><strong>Friday Night Live</strong><span>Twitch · 21:00</span></div><span class="badge">Twitch</span></div><div class="event"><div class="date"><b>06</b><span>SET</span></div><div><strong>Sunday Session</strong><span>Twitch · 18:00</span></div><span class="badge">Twitch</span></div><div class="event"><div class="date"><b>09</b><span>SET</span></div><div><strong>Midweek Stream</strong><span>Twitch · 21:00</span></div><span class="badge">Twitch</span></div></section>
     </div>
 
-    <section class="card" id="settings"><div class="card-head"><div><h2>Configurazione</h2><p class="muted">Impostazioni dell'ecosistema</p></div></div><div class="settings-grid"><div><span>Pagina pubblica</span><strong>/</strong></div><div><span>Pannello privato</span><strong>/admin</strong></div><div><span>Account gestiti</span><strong>7</strong></div><div><span>Post multipiattaforma</span><strong>Pronto</strong></div></div></section>
+    <section class="card" id="profileSettings"><div class="card-head"><div><h2>Profilo pubblico</h2><p class="muted">Imposta foto profilo e sfondo della pagina pubblica.</p></div><span class="muted">Personalizzazione</span></div><div class="profile-admin-grid"><div class="upload-box"><div class="upload-preview"><img id="adminAvatarPreview" alt="Anteprima profilo"><span id="adminAvatarFallback">TS</span></div><div class="upload-copy"><strong>Immagine di profilo</strong><small>PNG, JPG o WebP · consigliata 1:1</small><div class="upload-actions"><label class="primary file-btn">Scegli immagine<input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp"></label><button class="ghost compact" id="removeAvatar">Rimuovi</button></div></div></div><div class="upload-box cover-box"><div class="cover-preview" id="adminCoverPreview"><span id="adminCoverPlaceholder">Sfondo pagina</span></div><div class="upload-copy"><strong>Sfondo / copertina</strong><small>Immagine larga · consigliata 1600×900 o superiore</small><div class="upload-actions"><label class="primary file-btn">Scegli sfondo<input id="coverInput" type="file" accept="image/png,image/jpeg,image/webp"></label><button class="ghost compact" id="removeCover">Rimuovi</button></div></div></div></div><p class="helper">Le immagini vengono salvate nelle impostazioni del browser di questo pannello. La sincronizzazione pubblica tra dispositivi verrà collegata al salvataggio Cloudflare nel passaggio successivo.</p></section><section class="card" id="settings"><div class="card-head"><div><h2>Configurazione</h2><p class="muted">Impostazioni dell'ecosistema</p></div></div><div class="settings-grid"><div><span>Pagina pubblica</span><strong>/</strong></div><div><span>Pannello privato</span><strong>/admin</strong></div><div><span>Account gestiti</span><strong>7</strong></div><div><span>Post multipiattaforma</span><strong>Pronto</strong></div></div></section>
   </main>
 </div>
 
@@ -62,6 +62,32 @@ const socials=[
   {id:"tiktok",label:"TikTok",description:"Seguimi su TikTok",icon:"♪",href:"#",type:"TikTok",theme:"tiktok",eyebrow:"SHORT CONTENT"},
   {id:"x",label:"X",description:"Seguimi su X",icon:"𝕏",href:"#",type:"X",theme:"x",eyebrow:"SOCIAL"}
 ];
+
+const PROFILE_KEY="socialhub-profile-v1";
+const profileState=JSON.parse(localStorage.getItem(PROFILE_KEY)||"{}");
+function saveProfile(){localStorage.setItem(PROFILE_KEY,JSON.stringify(profileState)); applyProfile(); renderAdminProfile();}
+function applyProfile(){
+ const hero=document.getElementById("profileHero");
+ const avatar=document.getElementById("publicAvatar");
+ const fallback=document.getElementById("publicAvatarFallback");
+ if(!hero||!avatar||!fallback)return;
+ if(profileState.cover){hero.style.setProperty("--cover-image",`url(${profileState.cover})`);hero.classList.add("has-cover");}else{hero.style.removeProperty("--cover-image");hero.classList.remove("has-cover");}
+ if(profileState.avatar){avatar.src=profileState.avatar;avatar.hidden=false;fallback.hidden=true;}else{avatar.hidden=true;fallback.hidden=false;}
+}
+function renderAdminProfile(){
+ const img=document.getElementById("adminAvatarPreview"), fb=document.getElementById("adminAvatarFallback"), cp=document.getElementById("adminCoverPreview"), ph=document.getElementById("adminCoverPlaceholder");
+ if(!img||!fb||!cp||!ph)return;
+ if(profileState.avatar){img.src=profileState.avatar;img.hidden=false;fb.hidden=true;}else{img.hidden=true;fb.hidden=false;}
+ if(profileState.cover){cp.style.backgroundImage=`url(${profileState.cover})`;ph.hidden=true;}else{cp.style.backgroundImage="";ph.hidden=false;}
+}
+function readImage(file,cb){ if(!file)return; if(!/^image\/(png|jpeg|webp)$/.test(file.type)){alert("Formato non supportato. Usa PNG, JPG o WebP.");return;} if(file.size>6*1024*1024){alert("Immagine troppo grande. Massimo 6 MB.");return;} const r=new FileReader();r.onload=()=>cb(r.result);r.readAsDataURL(file);}
+function setupProfileAdmin(){
+ document.getElementById("avatarInput")?.addEventListener("change",e=>readImage(e.target.files[0],v=>{profileState.avatar=v;saveProfile();}));
+ document.getElementById("coverInput")?.addEventListener("change",e=>readImage(e.target.files[0],v=>{profileState.cover=v;saveProfile();}));
+ document.getElementById("removeAvatar")?.addEventListener("click",()=>{delete profileState.avatar;saveProfile();});
+ document.getElementById("removeCover")?.addEventListener("click",()=>{delete profileState.cover;saveProfile();});
+ renderAdminProfile();
+}
 
 function renderPublic(){
   const container=document.getElementById("publicLinks");
@@ -80,6 +106,7 @@ function renderPublic(){
 }
 
 function renderAdmin(){
+ setupProfileAdmin();
  document.getElementById("targetList").innerHTML=socials.map(s=>`<label class="target"><input type="checkbox" checked data-id="${s.id}"><span>${s.icon}</span>${s.label}${s.id.startsWith('youtube')?s.id.slice(-1):''}<b>✓</b></label>`).join("");
  document.getElementById("socialRows").innerHTML=socials.map(s=>`<div class="social-row"><div class="social-name"><span class="mini-icon">${s.icon}</span><div><strong>${s.label}${s.id.startsWith('youtube')?' '+s.id.slice(-1):''}</strong><small>${s.type}</small></div></div><span class="status">● Configurabile</span><button class="ghost compact">Modifica</button></div>`).join("");
 }
