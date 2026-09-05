@@ -1,17 +1,1 @@
-{
-  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
-  "name": "socialhub-web",
-  "main": "src/worker.mjs",
-  "compatibility_date": "2026-09-05",
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS"
-  },
-  "kv_namespaces": [
-    {
-      "binding": "SOCIALHUB_KV",
-      "id": "7f48451b52e547f3946ec95f32fa2467"
-    }
-  ],
-  "keep_vars": true
-}
+{"$schema":"https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json","name":"socialhub-web","main":"src/worker.mjs","compatibility_date":"2026-09-04","assets":{"directory":"./public","binding":"ASSETS"},"keep_vars":true}
