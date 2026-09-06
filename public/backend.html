@@ -26,7 +26,7 @@ label{display:block;font-size:11px;color:#9ba4b2;margin-bottom:6px}.field-grid{d
 /* V33 — Account center: presentation professional */
 #accounts .card-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
 #accounts .card-head h2{font-size:18px;letter-spacing:-.02em}
-#accounts .account-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+#accounts .account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px;align-items:start}
 #accounts .account-card{position:relative;display:flex;flex-direction:column;gap:0;padding:16px 16px 14px;border:1px solid #293140;background:linear-gradient(180deg,#171c25 0%,#12161d 100%);border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.025);overflow:hidden;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
 #accounts .account-card::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:linear-gradient(90deg,#8b5cf6,#5f46d8);opacity:.95}
 #accounts .account-card.is-connected::before{background:linear-gradient(90deg,#77cda2,#5bbd94)}
@@ -59,19 +59,10 @@ label{display:block;font-size:11px;color:#9ba4b2;margin-bottom:6px}.field-grid{d
 @media(max-width:1000px){#accounts .account-grid{grid-template-columns:1fr}}
 @media(max-width:600px){#accounts .account-topline{align-items:flex-start}.account-connect{margin-top:2px}.account-bottom{grid-template-columns:1fr!important}.account-capabilities{align-items:flex-start!important}.account-extra-actions{justify-content:flex-start!important}.account-metrics{grid-template-columns:1fr 1fr!important}}
 
-/* V34 — account grid refinement: cards keep their natural height instead of stretching to the tallest card in the row. */
-/* V35 — true two-column masonry: each column has its own flow, so cards never leave blank row space. */
-#accounts .account-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
-#accounts .account-column{display:flex;flex-direction:column;gap:14px;min-width:0}
-#accounts .account-card{height:auto;min-height:0;margin:0}
-#accounts .account-topline{min-height:48px}
-#accounts .account-bottom{align-items:start}
-#accounts .account-metrics{align-content:start}
-#accounts .account-capabilities{justify-content:flex-start}
-#accounts .account-divider{margin:14px 0 12px}
-#accounts .metric-box{min-height:60px}
-#accounts .account-card.is-pending .account-bottom{padding-top:0}
-@media(max-width:1000px){#accounts .account-grid{grid-template-columns:1fr}}
+/* V36: independent account columns remove shared row heights */
+#accounts .account-column{display:flex;flex-direction:column;gap:14px;min-width:0;align-self:start}
+#accounts .account-card{width:100%;height:auto;min-height:0}
+@media(max-width:1000px){#accounts .account-grid{grid-template-columns:1fr}#accounts .account-column{gap:14px}}
 </style></head><body>
 <aside class="sidebar"><div class="brand"><span class="logo-dot"></span><span>SocialHub</span></div><div class="workspace">THESYNCFM <span>BACKEND</span></div><nav><a class="active" href="#dashboard">⌂ <span>Dashboard</span></a><a href="#page">◫ <span>Pagina pubblica</span></a><a href="#profile">◉ <span>Profilo</span></a><a href="#banners">▣ <span>Banner</span></a><a href="#accounts">◎ <span>Account</span></a><a href="#composer">✎ <span>Crea post</span></a><a href="#videos">▶ <span>Pubblica video</span></a></nav></aside>
 <main><div class="backend-shell">
