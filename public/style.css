@@ -160,3 +160,5 @@
   filter:blur(10px);
   transform:scale(1.05);
 }
+
+.account-extra-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.account-extra-actions .danger{border-color:rgba(255,80,100,.35);color:#ff8d9b}
