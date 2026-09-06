@@ -460,7 +460,7 @@ async function preparePublication(request, env){
   const pending = targets.filter(x=>x !== "x" && !config.accounts?.[x]?.connected);
   if(blocked.length) return json({ok:false,error:"X non disponibile nel flusso gratuito: la sua API è pay-per-use.",config},402);
   if(pending.length) return json({ok:false,error:`Account da collegare: ${pending.join(", ")}`,config},409);
-  return json({ok:true,message:"Selezione validata e bozza salvata. L'invio reale verrà eseguito solo dalle integrazioni autorizzate.",config});
+  return json({ok:true,sent:false,status:'prepared',message:"Selezione validata e bozza salvata. NESSUN SOCIAL HA RICEVUTO IL POST: l'invio reale non è ancora attivo.",config});
 }
 
 async function getConfig(env) {
