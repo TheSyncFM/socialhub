@@ -34,6 +34,7 @@ export default {
       }
       if (url.pathname === "/api/accounts/callback/twitch" && request.method === "GET") return finishTwitchConnection(request, env, url);
       if (url.pathname === "/api/accounts/sync/twitch" && request.method === "POST") return syncTwitchAccount(env);
+      if (url.pathname === "/api/diagnostic/twitch" && request.method === "GET") return twitchDiagnostic(env);
       if (url.pathname === "/api/accounts/disconnect/twitch" && request.method === "POST") return disconnectTwitchAccount(env);
       if (url.pathname.startsWith("/api/publish") && request.method === "POST") return preparePublication(request, env);
 
@@ -65,6 +66,19 @@ const PLATFORM_SETUP = {
   tiktok: "TikTok: configura TikTok Login Kit e gli scope user.info.stats e video.publish.",
   x: "X: l'API attuale è pay-per-use, quindi viene lasciata disattivata per rispettare il requisito €0."
 };
+
+async function twitchDiagnostic(env){
+  const hasId = typeof env.TWITCH_CLIENT_ID === "string" && env.TWITCH_CLIENT_ID.trim().length > 0;
+  const hasSecret = typeof env.TWITCH_CLIENT_SECRET === "string" && env.TWITCH_CLIENT_SECRET.trim().length > 0;
+  let kvOk=false;
+  let kvError="";
+  try{
+    if(!env.SOCIALHUB_DATA) throw new Error("KV non collegato");
+    await env.SOCIALHUB_DATA.get("__healthcheck__");
+    kvOk=true;
+  }catch(e){ kvError=e?.message||"KV non disponibile"; }
+  return json({ok:hasId&&hasSecret&&kvOk, twitchClientId:hasId, twitchClientSecret:hasSecret, kv:kvOk, kvError:kvOk?"":kvError, origin:"socialhub-web"});
+}
 
 async function startAccountConnection(id, env, url){
   const allowed = ["instagram","youtube1","youtube2","twitch","kick","tiktok","x"];
