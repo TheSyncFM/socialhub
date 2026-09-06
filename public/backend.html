@@ -58,6 +58,17 @@ label{display:block;font-size:11px;color:#9ba4b2;margin-bottom:6px}.field-grid{d
 #accounts .warning{margin-top:14px!important}
 @media(max-width:1000px){#accounts .account-grid{grid-template-columns:1fr}}
 @media(max-width:600px){#accounts .account-topline{align-items:flex-start}.account-connect{margin-top:2px}.account-bottom{grid-template-columns:1fr!important}.account-capabilities{align-items:flex-start!important}.account-extra-actions{justify-content:flex-start!important}.account-metrics{grid-template-columns:1fr 1fr!important}}
+
+/* V34 — account grid refinement: cards keep their natural height instead of stretching to the tallest card in the row. */
+#accounts .account-grid{align-items:start;grid-auto-rows:max-content}
+#accounts .account-card{align-self:start;height:auto;min-height:0}
+#accounts .account-topline{min-height:48px}
+#accounts .account-bottom{align-items:start}
+#accounts .account-metrics{align-content:start}
+#accounts .account-capabilities{justify-content:flex-start}
+#accounts .account-divider{margin:12px 0 10px}
+#accounts .metric-box{min-height:60px}
+#accounts .account-card.is-pending .account-bottom{padding-top:0}
 </style></head><body>
 <aside class="sidebar"><div class="brand"><span class="logo-dot"></span><span>SocialHub</span></div><div class="workspace">THESYNCFM <span>BACKEND</span></div><nav><a class="active" href="#dashboard">⌂ <span>Dashboard</span></a><a href="#page">◫ <span>Pagina pubblica</span></a><a href="#profile">◉ <span>Profilo</span></a><a href="#banners">▣ <span>Banner</span></a><a href="#accounts">◎ <span>Account</span></a><a href="#composer">✎ <span>Crea post</span></a><a href="#videos">▶ <span>Pubblica video</span></a></nav></aside>
 <main><div class="backend-shell">
