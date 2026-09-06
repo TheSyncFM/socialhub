@@ -46,6 +46,8 @@ export default {
         const slot = decodeURIComponent(url.pathname.slice("/api/accounts/disconnect/youtube/".length));
         return disconnectYouTubeAccount(env, slot);
       }
+      if (url.pathname === "/api/accounts/sync/instagram" && request.method === "POST") return syncInstagramAccount(env);
+      if (url.pathname === "/api/accounts/disconnect/instagram" && request.method === "POST") return disconnectInstagramAccount(env);
       if (url.pathname.startsWith("/api/publish") && request.method === "POST") return preparePublication(request, env);
 
       if (url.pathname.startsWith("/api/media/")) {
@@ -136,6 +138,72 @@ function getCookie(request,name){
 }
 function clearCookieHeader(){return "socialhub_yt_state=; Path=/api/accounts/callback/youtube; Max-Age=0; HttpOnly; Secure; SameSite=Lax"}
 
+async function instagramApi(path, token){
+  const base = "https://graph.instagram.com/v23.0";
+  const u = new URL(base + path);
+  u.searchParams.set("access_token", token);
+  const resp = await fetch(u.toString(), { headers: { "Accept": "application/json" } });
+  const data = await resp.json().catch(() => ({}));
+  return { ok: resp.ok, data, status: resp.status };
+}
+
+async function syncInstagramAccount(env){
+  if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"INSTAGRAM_ACCESS_TOKEN non configurato nel Worker."},503);
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+
+  const profile = await instagramApi("/me?fields=id,username,name,profile_picture_url", env.INSTAGRAM_ACCESS_TOKEN);
+  if(!profile.ok){
+    const msg = profile.data?.error?.message || `Instagram API errore ${profile.status}`;
+    return json({ok:false,error:`Instagram: ${msg}`},502);
+  }
+
+  let followerValue = "—";
+  const insights = await instagramApi("/me/insights?metric=follower_count&period=day", env.INSTAGRAM_ACCESS_TOKEN);
+  if(insights.ok && Array.isArray(insights.data?.data)){
+    const metric = insights.data.data.find(x => x.name === "follower_count");
+    const values = Array.isArray(metric?.values) ? metric.values : [];
+    if(values.length) followerValue = String(values[values.length - 1]?.value ?? "—");
+  }
+
+  const raw = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  const config = raw ? JSON.parse(raw) : structuredClone(DEFAULT_CONFIG);
+  config.accounts = config.accounts || {};
+  const previous = config.accounts.instagram || {};
+  config.accounts.instagram = {
+    ...previous,
+    connected: true,
+    accountType: "professional",
+    handle: profile.data?.username ? `@${profile.data.username}` : (previous.handle || ""),
+    displayName: profile.data?.name || profile.data?.username || "Instagram",
+    profileUrl: profile.data?.username ? `https://www.instagram.com/${encodeURIComponent(profile.data.username)}/` : (previous.profileUrl || ""),
+    instagramId: profile.data?.id || "",
+    profileImage: profile.data?.profile_picture_url || previous.profileImage || "",
+    followerLabel: "Follower",
+    followerValue,
+    lastSync: Date.now(),
+    note: "Account Creator/Professionale collegato tramite Instagram API"
+  };
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
+  return json({ok:true,account:config.accounts.instagram,config,message:`Instagram collegato${followerValue !== "—" ? ` · ${followerValue} follower` : ""}.`});
+}
+
+async function disconnectInstagramAccount(env){
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+  const raw = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  const config = raw ? JSON.parse(raw) : structuredClone(DEFAULT_CONFIG);
+  config.accounts = config.accounts || {};
+  const previous = config.accounts.instagram || {};
+  config.accounts.instagram = {
+    ...previous,
+    connected: false,
+    followerLabel: "Follower",
+    followerValue: "—",
+    lastSync: 0
+  };
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
+  return json({ok:true,config,message:"Instagram scollegato dal pannello."});
+}
+
 const PLATFORM_SETUP = {
   instagram: "Instagram: puoi usare un account personale con configurazione manuale oppure un account professionale per le integrazioni API.",
   youtube1: "YouTube 1: configura le credenziali OAuth Google (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET).",
@@ -150,7 +218,10 @@ async function startAccountConnection(id, env, url){
   const allowed = ["instagram","youtube1","youtube2","twitch","kick","tiktok","x"];
   if(!allowed.includes(id)) return json({ok:false,error:"Account non riconosciuto"},400);
   if(id === "x") return json({ok:false,error:PLATFORM_SETUP.x},402);
-  if(id === "instagram") return json({ok:false,error:"Instagram è configurabile dal pannello: scegli Personale per inserire manualmente profilo e link, oppure Professionale per predisporre il collegamento API."},409);
+  if(id === "instagram") {
+    if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"Instagram: configura INSTAGRAM_ACCESS_TOKEN nel Worker dopo aver generato il token dalla Meta App."},503);
+    return syncInstagramAccount(env);
+  }
   if(id === "youtube1" || id === "youtube2"){
     if(!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return json({ok:false,error:PLATFORM_SETUP[id]},503);
     if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
