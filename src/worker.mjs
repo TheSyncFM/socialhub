@@ -26,6 +26,7 @@ export default {
 
       if (url.pathname === "/api/config" && request.method === "GET") return getConfig(env);
       if (url.pathname === "/api/config" && request.method === "POST") return saveConfig(request, env);
+      if (url.pathname === "/api/diagnostic/config" && request.method === "GET") return diagnosticConfig(env);
 
       if (url.pathname.startsWith("/api/accounts/connect/")) {
         const id = decodeURIComponent(url.pathname.slice("/api/accounts/connect/".length));
@@ -34,8 +35,17 @@ export default {
       }
       if (url.pathname === "/api/accounts/callback/twitch" && request.method === "GET") return finishTwitchConnection(request, env, url);
       if (url.pathname === "/api/accounts/sync/twitch" && request.method === "POST") return syncTwitchAccount(env);
-      if (url.pathname === "/api/diagnostic/twitch" && request.method === "GET") return twitchDiagnostic(env);
       if (url.pathname === "/api/accounts/disconnect/twitch" && request.method === "POST") return disconnectTwitchAccount(env);
+      if (url.pathname === "/api/accounts/callback/youtube" && request.method === "GET") return finishYouTubeConnection(request, env, url);
+      if (url.pathname === "/api/accounts/youtube/select" && request.method === "GET") return selectYouTubeChannel(request, env, url);
+      if (url.pathname.startsWith("/api/accounts/sync/youtube") && request.method === "POST") {
+        const slot = decodeURIComponent(url.pathname.slice("/api/accounts/sync/youtube/".length));
+        return syncYouTubeAccount(env, slot);
+      }
+      if (url.pathname.startsWith("/api/accounts/disconnect/youtube") && request.method === "POST") {
+        const slot = decodeURIComponent(url.pathname.slice("/api/accounts/disconnect/youtube/".length));
+        return disconnectYouTubeAccount(env, slot);
+      }
       if (url.pathname.startsWith("/api/publish") && request.method === "POST") return preparePublication(request, env);
 
       if (url.pathname.startsWith("/api/media/")) {
@@ -57,6 +67,21 @@ export default {
 };
 
 
+async function diagnosticConfig(env){
+  return json({
+    ok:true,
+    checks:{
+      twitchClientId:Boolean(env.TWITCH_CLIENT_ID),
+      twitchClientSecret:Boolean(env.TWITCH_CLIENT_SECRET),
+      googleClientId:Boolean(env.GOOGLE_CLIENT_ID),
+      googleClientSecret:Boolean(env.GOOGLE_CLIENT_SECRET),
+      kv:Boolean(env.SOCIALHUB_DATA),
+      assets:Boolean(env.ASSETS)
+    },
+    timestamp:Date.now()
+  });
+}
+
 const PLATFORM_SETUP = {
   instagram: "Instagram: puoi usare un account personale con configurazione manuale oppure un account professionale per le integrazioni API.",
   youtube1: "YouTube 1: configura le credenziali OAuth Google (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET).",
@@ -67,24 +92,28 @@ const PLATFORM_SETUP = {
   x: "X: l'API attuale è pay-per-use, quindi viene lasciata disattivata per rispettare il requisito €0."
 };
 
-async function twitchDiagnostic(env){
-  const hasId = typeof env.TWITCH_CLIENT_ID === "string" && env.TWITCH_CLIENT_ID.trim().length > 0;
-  const hasSecret = typeof env.TWITCH_CLIENT_SECRET === "string" && env.TWITCH_CLIENT_SECRET.trim().length > 0;
-  let kvOk=false;
-  let kvError="";
-  try{
-    if(!env.SOCIALHUB_DATA) throw new Error("KV non collegato");
-    await env.SOCIALHUB_DATA.get("__healthcheck__");
-    kvOk=true;
-  }catch(e){ kvError=e?.message||"KV non disponibile"; }
-  return json({ok:hasId&&hasSecret&&kvOk, twitchClientId:hasId, twitchClientSecret:hasSecret, kv:kvOk, kvError:kvOk?"":kvError, origin:"socialhub-web"});
-}
-
 async function startAccountConnection(id, env, url){
   const allowed = ["instagram","youtube1","youtube2","twitch","kick","tiktok","x"];
   if(!allowed.includes(id)) return json({ok:false,error:"Account non riconosciuto"},400);
   if(id === "x") return json({ok:false,error:PLATFORM_SETUP.x},402);
   if(id === "instagram") return json({ok:false,error:"Instagram è configurabile dal pannello: scegli Personale per inserire manualmente profilo e link, oppure Professionale per predisporre il collegamento API."},409);
+  if(id === "youtube1" || id === "youtube2"){
+    if(!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return json({ok:false,error:PLATFORM_SETUP[id]},503);
+    if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+    const state = crypto.randomUUID();
+    await env.SOCIALHUB_DATA.put(`oauth:youtube:state:${state}`, JSON.stringify({state,slot:id,createdAt:Date.now()}), {expirationTtl:600});
+    const redirect = `${url.origin}/api/accounts/callback/youtube`;
+    const oauth = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    oauth.searchParams.set("client_id", env.GOOGLE_CLIENT_ID);
+    oauth.searchParams.set("redirect_uri", redirect);
+    oauth.searchParams.set("response_type", "code");
+    oauth.searchParams.set("access_type", "offline");
+    oauth.searchParams.set("prompt", "consent");
+    oauth.searchParams.set("include_granted_scopes", "true");
+    oauth.searchParams.set("scope", ["https://www.googleapis.com/auth/youtube.readonly","https://www.googleapis.com/auth/youtube.upload","https://www.googleapis.com/auth/youtube.channel-memberships.creator"].join(" "));
+    oauth.searchParams.set("state", state);
+    return json({ok:true,ready:true,url:oauth.toString(),message:`Apro Google per autorizzare ${id === "youtube1" ? "YouTube 1" : "YouTube 2"}.`});
+  }
   if(id === "twitch"){
     if(!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) return json({ok:false,error:PLATFORM_SETUP.twitch},503);
     const state = crypto.randomUUID();
@@ -198,6 +227,148 @@ async function disconnectTwitchAccount(env){
   await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
   return json({ok:true,config});
 }
+
+async function googleTokenRequest(env, params){
+  const body = new URLSearchParams({client_id:env.GOOGLE_CLIENT_ID,client_secret:env.GOOGLE_CLIENT_SECRET,...params});
+  const resp = await fetch("https://oauth2.googleapis.com/token", {method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+  const data = await resp.json().catch(()=>({error_description:"Risposta non valida"}));
+  return {ok:resp.ok,data};
+}
+
+async function googleApi(url, accessToken, options={}){
+  const headers = new Headers(options.headers||{});
+  headers.set("Authorization", `Bearer ${accessToken}`);
+  return fetch(url, {...options,headers});
+}
+
+async function getYouTubeToken(env, slot){
+  const raw=await env.SOCIALHUB_DATA.get(`oauth:youtube:token:${slot}`);
+  if(!raw) return null;
+  try{return JSON.parse(raw)}catch{return null}
+}
+
+async function storeYouTubeToken(env, slot, token){
+  await env.SOCIALHUB_DATA.put(`oauth:youtube:token:${slot}`, JSON.stringify({
+    accessToken:token.access_token,
+    refreshToken:token.refresh_token || "",
+    expiresIn:token.expires_in || 0,
+    scope:token.scope || "",
+    tokenType:token.token_type || "Bearer",
+    updatedAt:Date.now()
+  }));
+}
+
+async function refreshYouTubeToken(env, slot, current){
+  if(!current?.refreshToken) return null;
+  const result=await googleTokenRequest(env,{grant_type:"refresh_token",refresh_token:current.refreshToken});
+  if(!result.ok || !result.data?.access_token) return null;
+  await storeYouTubeToken(env,slot,{...result.data,refresh_token:current.refreshToken});
+  return result.data.access_token;
+}
+
+async function finishYouTubeConnection(request, env, url){
+  if(!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return new Response("Credenziali Google non configurate",{status:503});
+  if(!env.SOCIALHUB_DATA) return new Response("KV SOCIALHUB_DATA non collegato",{status:503});
+  const state=url.searchParams.get("state");
+  const code=url.searchParams.get("code");
+  const storedRaw=state?await env.SOCIALHUB_DATA.get(`oauth:youtube:state:${state}`):null;
+  const stored=storedRaw?JSON.parse(storedRaw):null;
+  if(!state || !code || !stored || stored.state!==state) return new Response("Stato OAuth Google non valido",{status:400});
+  await env.SOCIALHUB_DATA.delete(`oauth:youtube:state:${state}`);
+  const tokenResp=await googleTokenRequest(env,{code,grant_type:"authorization_code",redirect_uri:`${url.origin}/api/accounts/callback/youtube`});
+  const token=tokenResp.data;
+  if(!tokenResp.ok || !token?.access_token) return new Response(`Errore Google OAuth: ${escapeHtml(token?.error_description||token?.error||"token non ottenuto")}`,{status:502});
+  await storeYouTubeToken(env,stored.slot,token);
+  const channels=await fetchYouTubeChannels(env,token.access_token);
+  if(!channels.ok) return new Response(`Autorizzazione riuscita, ma i canali YouTube non sono stati recuperati: ${escapeHtml(channels.error)}`,{status:502});
+  if(channels.items.length===0) return new Response("Nessun canale YouTube disponibile per questo account Google.",{status:404});
+  if(channels.items.length===1){
+    await saveSelectedYouTubeChannel(env,stored.slot,channels.items[0]);
+    return youtubeDonePage(stored.slot,channels.items[0]);
+  }
+  const options=channels.items.map(ch=>`<a href="${escapeAttr(`${url.origin}/api/accounts/youtube/select?slot=${encodeURIComponent(stored.slot)}&channelId=${encodeURIComponent(ch.id)}`)}" style="display:block;padding:14px 16px;margin:8px 0;background:#151a24;border:1px solid #30384a;border-radius:12px;color:#fff;text-decoration:none"><strong>${escapeHtml(ch.title)}</strong><div style="color:#8e98a8;font-size:12px;margin-top:4px">${escapeHtml(ch.subscriberValue)} iscritti</div></a>`).join('');
+  return new Response(`<html><body style="font-family:system-ui;background:#0b0e14;color:#fff;padding:40px;max-width:720px;margin:auto"><h2>Seleziona il canale per ${escapeHtml(stored.slot==='youtube1'?'YouTube 1':'YouTube 2')}</h2><p style="color:#9aa4b2">L'account Google autorizzato dispone di più canali. Scegli quale associare a questa scheda.</p>${options}</body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}});
+}
+
+async function fetchYouTubeChannels(env, accessToken){
+  const resp=await googleApi("https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true",accessToken);
+  const data=await resp.json().catch(()=>({}));
+  if(!resp.ok) return {ok:false,error:data?.error?.message||"Errore YouTube channels.list"};
+  const items=(data.items||[]).map(ch=>({id:ch.id,title:ch.snippet?.title||"Canale YouTube",handle:ch.snippet?.customUrl||"",profileImage:ch.snippet?.thumbnails?.default?.url||ch.snippet?.thumbnails?.medium?.url||"",subscriberValue:String(ch.statistics?.subscriberCount??"—") ,viewCount:String(ch.statistics?.viewCount??"—")}));
+  return {ok:true,items};
+}
+
+async function selectYouTubeChannel(request, env, url){
+  const slot=url.searchParams.get("slot");
+  const channelId=url.searchParams.get("channelId");
+  if(!["youtube1","youtube2"].includes(slot) || !channelId) return new Response("Parametri non validi",{status:400});
+  const token=await getYouTubeToken(env,slot);
+  if(!token?.accessToken) return new Response("Autorizzazione YouTube non trovata",{status:409});
+  const channel=await fetchYouTubeChannelById(env,token.accessToken,channelId);
+  if(!channel.ok) return new Response(`Canale non recuperato: ${escapeHtml(channel.error)}`,{status:502});
+  await saveSelectedYouTubeChannel(env,slot,channel.account);
+  return youtubeDonePage(slot,channel.account);
+}
+
+async function fetchYouTubeChannelById(env,accessToken,channelId){
+  const resp=await googleApi(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${encodeURIComponent(channelId)}`,accessToken);
+  const data=await resp.json().catch(()=>({}));
+  if(!resp.ok || !data.items?.[0]) return {ok:false,error:data?.error?.message||"Canale YouTube non trovato"};
+  const ch=data.items[0];
+  return {ok:true,account:{id:ch.id,title:ch.snippet?.title||"Canale YouTube",handle:ch.snippet?.customUrl||"",profileImage:ch.snippet?.thumbnails?.medium?.url||ch.snippet?.thumbnails?.default?.url||"",followerLabel:"Iscritti",followerValue:String(ch.statistics?.subscriberCount??"—"),viewCount:String(ch.statistics?.viewCount??"—")}};
+}
+
+async function saveSelectedYouTubeChannel(env,slot,account){
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};
+  config.accounts[slot]={connected:true,handle:account.handle||account.title,displayName:account.title,channelId:account.id,profileImage:account.profileImage||"",followerLabel:"Iscritti",followerValue:String(account.followerValue??"—"),subscriberLabel:"Membri",subscriberValue:"—",lastSync:Date.now(),viewCount:String(account.viewCount??"")};
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return config;
+}
+
+function youtubeDonePage(slot,account){
+  return new Response(`<html><body style="font-family:system-ui;background:#0b0e14;color:#fff;padding:40px"><h2>${escapeHtml(slot==='youtube1'?'YouTube 1':'YouTube 2')} collegato ✓</h2><p>Canale: ${escapeHtml(account.title||account.handle||"")}</p><p>Iscritti: ${escapeHtml(account.followerValue||"—")}</p><p>Puoi chiudere questa finestra e tornare al backend.</p><script>setTimeout(()=>window.close(),1200)</script></body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}});
+}
+
+async function syncYouTubeAccount(env,slot){
+  if(!env.SOCIALHUB_DATA || !env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return json({ok:false,error:"Configurazione Google/KV incompleta."},503);
+  if(!["youtube1","youtube2"].includes(slot)) return json({ok:false,error:"Slot YouTube non valido."},400);
+  let token=await getYouTubeToken(env,slot);
+  if(!token?.accessToken) return json({ok:false,error:"YouTube non è collegato.",reauth:true},409);
+  const current=await env.SOCIALHUB_DATA.get(CONFIG_KEY);let config=current?JSON.parse(current):structuredClone(DEFAULT_CONFIG);const channelId=config.accounts?.[slot]?.channelId;
+  if(!channelId) return json({ok:false,error:"Canale YouTube non associato.",reauth:true},409);
+  let result=await fetchYouTubeChannelById(env,token.accessToken,channelId);
+  if(!result.ok){
+    const refreshed=await refreshYouTubeToken(env,slot,token);
+    if(!refreshed) return json({ok:false,error:"Sessione Google scaduta. Ricollega YouTube.",reauth:true},401);
+    result=await fetchYouTubeChannelById(env,refreshed,channelId);
+  }
+  if(!result.ok) return json({ok:false,error:result.error||"Impossibile aggiornare YouTube."},502);
+  const account={...config.accounts[slot],...result.account,lastSync:Date.now()};
+  // Try current paid channel members count when the API is enabled for the creator; otherwise retain an honest unavailable state.
+  let memberValue="—";
+  const tokenNow=await getYouTubeToken(env,slot);
+  if(tokenNow?.accessToken){
+    try{
+      const m=await googleApi("https://www.googleapis.com/youtube/v3/members?part=snippet&maxResults=1",tokenNow.accessToken);
+      if(m.ok){const md=await m.json().catch(()=>({}));memberValue=String(md.pageInfo?.totalResults??"—");}
+    }catch{}
+  }
+  account.subscriberLabel="Membri";account.subscriberValue=memberValue;
+  config.accounts[slot]=account;await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,account,config});
+}
+
+async function disconnectYouTubeAccount(env,slot){
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV non collegato."},503);
+  const token=await getYouTubeToken(env,slot);
+  if(token?.accessToken){try{await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token.accessToken)}`,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"}})}catch{}}
+  await env.SOCIALHUB_DATA.delete(`oauth:youtube:token:${slot}`);
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);config.accounts=config.accounts||{};config.accounts[slot]={connected:false};await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,config});
+}
+
+function escapeAttr(v){return String(v??'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
 
 function escapeHtml(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;')}
 
