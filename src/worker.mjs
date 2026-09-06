@@ -82,6 +82,60 @@ async function diagnosticConfig(env){
   });
 }
 
+
+function bytesToBase64Url(bytes){
+  let binary="";
+  for(const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replaceAll("+","-").replaceAll("/","_").replace(/=+$/g,"");
+}
+function base64UrlToBytes(input){
+  const s=String(input||"").replaceAll("-","+").replaceAll("_","/");
+  const pad="=".repeat((4-(s.length%4))%4);
+  const bin=atob(s+pad);
+  const out=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+  return out;
+}
+async function hmacState(env,payload){
+  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(env.GOOGLE_CLIENT_SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+  const sig=new Uint8Array(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(payload)));
+  return bytesToBase64Url(sig);
+}
+async function makeYouTubeState(env,slot){
+  const payload=`${slot}.${Date.now()}.${crypto.randomUUID()}`;
+  const sig=await hmacState(env,payload);
+  return `${bytesToBase64Url(new TextEncoder().encode(payload))}.${sig}`;
+}
+async function verifyYouTubeState(env,token){
+  try{
+    const parts=String(token||"").split(".");
+    if(parts.length<2) return null;
+    const sig=parts.pop();
+    const payloadB64=parts.join(".");
+    const payload=new TextDecoder().decode(base64UrlToBytes(payloadB64));
+    const expected=await hmacState(env,payload);
+    const a=base64UrlToBytes(sig), b=base64UrlToBytes(expected);
+    if(a.length!==b.length) return null;
+    let diff=0; for(let i=0;i<a.length;i++) diff|=a[i]^b[i];
+    if(diff!==0) return null;
+    const parts2=payload.split(".");
+    const slot=parts2[0], created=Number(parts2[1]);
+    if(!["youtube1","youtube2"].includes(slot) || !Number.isFinite(created)) return null;
+    const age=Date.now()-created;
+    if(age>10*60*1000 || age < -60*1000) return null;
+    return {slot,createdAt:created};
+  }catch{return null}
+}
+function getCookie(request,name){
+  const raw=request.headers.get("Cookie")||"";
+  for(const part of raw.split(";")){
+    const [k,...rest]=part.trim().split("=");
+    if(k===name) return decodeURIComponent(rest.join("="));
+  }
+  return null;
+}
+function clearCookieHeader(){return "socialhub_yt_state=; Path=/api/accounts/callback/youtube; Max-Age=0; HttpOnly; Secure; SameSite=Lax"}
+
 const PLATFORM_SETUP = {
   instagram: "Instagram: puoi usare un account personale con configurazione manuale oppure un account professionale per le integrazioni API.",
   youtube1: "YouTube 1: configura le credenziali OAuth Google (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET).",
@@ -100,8 +154,7 @@ async function startAccountConnection(id, env, url){
   if(id === "youtube1" || id === "youtube2"){
     if(!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return json({ok:false,error:PLATFORM_SETUP[id]},503);
     if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
-    const state = crypto.randomUUID();
-    await env.SOCIALHUB_DATA.put(`oauth:youtube:state:${state}`, JSON.stringify({state,slot:id,createdAt:Date.now()}), {expirationTtl:600});
+    const state = await makeYouTubeState(env,id);
     const redirect = `${url.origin}/api/accounts/callback/youtube`;
     const oauth = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     oauth.searchParams.set("client_id", env.GOOGLE_CLIENT_ID);
@@ -112,7 +165,9 @@ async function startAccountConnection(id, env, url){
     oauth.searchParams.set("include_granted_scopes", "true");
     oauth.searchParams.set("scope", ["https://www.googleapis.com/auth/youtube.readonly","https://www.googleapis.com/auth/youtube.upload","https://www.googleapis.com/auth/youtube.channel-memberships.creator"].join(" "));
     oauth.searchParams.set("state", state);
-    return json({ok:true,ready:true,url:oauth.toString(),message:`Apro Google per autorizzare ${id === "youtube1" ? "YouTube 1" : "YouTube 2"}.`});
+    const response=json({ok:true,ready:true,url:oauth.toString(),message:`Apro Google per autorizzare ${id === "youtube1" ? "YouTube 1" : "YouTube 2"}.`});
+    response.headers.set("Set-Cookie",`socialhub_yt_state=${encodeURIComponent(state)}; Path=/api/accounts/callback/youtube; Max-Age=600; HttpOnly; Secure; SameSite=Lax`);
+    return response;
   }
   if(id === "twitch"){
     if(!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) return json({ok:false,error:PLATFORM_SETUP.twitch},503);
@@ -271,10 +326,11 @@ async function finishYouTubeConnection(request, env, url){
   if(!env.SOCIALHUB_DATA) return new Response("KV SOCIALHUB_DATA non collegato",{status:503});
   const state=url.searchParams.get("state");
   const code=url.searchParams.get("code");
-  const storedRaw=state?await env.SOCIALHUB_DATA.get(`oauth:youtube:state:${state}`):null;
-  const stored=storedRaw?JSON.parse(storedRaw):null;
-  if(!state || !code || !stored || stored.state!==state) return new Response("Stato OAuth Google non valido",{status:400});
-  await env.SOCIALHUB_DATA.delete(`oauth:youtube:state:${state}`);
+  const cookieState=getCookie(request,"socialhub_yt_state");
+  if(!state || !code) return new Response("Autorizzazione Google incompleta",{status:400});
+  if(!cookieState || cookieState!==state) return new Response("Stato OAuth Google non valido: cookie mancante o non corrispondente",{status:400});
+  const stored=await verifyYouTubeState(env,state);
+  if(!stored) return new Response("Stato OAuth Google scaduto o non valido",{status:400});
   const tokenResp=await googleTokenRequest(env,{code,grant_type:"authorization_code",redirect_uri:`${url.origin}/api/accounts/callback/youtube`});
   const token=tokenResp.data;
   if(!tokenResp.ok || !token?.access_token) return new Response(`Errore Google OAuth: ${escapeHtml(token?.error_description||token?.error||"token non ottenuto")}`,{status:502});
@@ -282,12 +338,29 @@ async function finishYouTubeConnection(request, env, url){
   const channels=await fetchYouTubeChannels(env,token.access_token);
   if(!channels.ok) return new Response(`Autorizzazione riuscita, ma i canali YouTube non sono stati recuperati: ${escapeHtml(channels.error)}`,{status:502});
   if(channels.items.length===0) return new Response("Nessun canale YouTube disponibile per questo account Google.",{status:404});
+  const configRaw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  const config=configRaw?JSON.parse(configRaw):structuredClone(DEFAULT_CONFIG);
+  const otherSlot=stored.slot==='youtube1'?'youtube2':'youtube1';
+  const usedChannelId=config.accounts?.[otherSlot]?.channelId || "";
+  const available=channels.items.filter(ch=>ch.id!==usedChannelId);
   if(channels.items.length===1){
+    if(channels.items[0].id===usedChannelId){
+      return withClearedYouTubeCookie(new Response(`Il canale YouTube disponibile è già associato a ${escapeHtml(otherSlot==='youtube1'?'YouTube 1':'YouTube 2')}. Questo account Google non presenta un secondo canale utilizzabile.`,{status:409}));
+    }
     await saveSelectedYouTubeChannel(env,stored.slot,channels.items[0]);
-    return youtubeDonePage(stored.slot,channels.items[0]);
+    return withClearedYouTubeCookie(youtubeDonePage(stored.slot,channels.items[0]));
   }
-  const options=channels.items.map(ch=>`<a href="${escapeAttr(`${url.origin}/api/accounts/youtube/select?slot=${encodeURIComponent(stored.slot)}&channelId=${encodeURIComponent(ch.id)}`)}" style="display:block;padding:14px 16px;margin:8px 0;background:#151a24;border:1px solid #30384a;border-radius:12px;color:#fff;text-decoration:none"><strong>${escapeHtml(ch.title)}</strong><div style="color:#8e98a8;font-size:12px;margin-top:4px">${escapeHtml(ch.subscriberValue)} iscritti</div></a>`).join('');
-  return new Response(`<html><body style="font-family:system-ui;background:#0b0e14;color:#fff;padding:40px;max-width:720px;margin:auto"><h2>Seleziona il canale per ${escapeHtml(stored.slot==='youtube1'?'YouTube 1':'YouTube 2')}</h2><p style="color:#9aa4b2">L'account Google autorizzato dispone di più canali. Scegli quale associare a questa scheda.</p>${options}</body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}});
+  if(available.length===0){
+    return withClearedYouTubeCookie(new Response(`Tutti i canali YouTube restituiti da Google sono già associati agli slot YouTube 1/YouTube 2.`,{status:409}));
+  }
+  const options=channels.items.map(ch=>{
+    const used=ch.id===usedChannelId;
+    if(used){
+      return `<div style="display:block;padding:14px 16px;margin:8px 0;background:#121722;border:1px solid #333b4c;border-radius:12px;color:#7f8999;opacity:.72"><strong>${escapeHtml(ch.title)}</strong><div style="font-size:12px;margin-top:4px">${escapeHtml(ch.subscriberValue)} iscritti · già associato a ${escapeHtml(otherSlot==='youtube1'?'YouTube 1':'YouTube 2')}</div></div>`;
+    }
+    return `<a href="${escapeAttr(`${url.origin}/api/accounts/youtube/select?slot=${encodeURIComponent(stored.slot)}&channelId=${encodeURIComponent(ch.id)}`)}" style="display:block;padding:14px 16px;margin:8px 0;background:#151a24;border:1px solid #30384a;border-radius:12px;color:#fff;text-decoration:none"><strong>${escapeHtml(ch.title)}</strong><div style="color:#8e98a8;font-size:12px;margin-top:4px">${escapeHtml(ch.subscriberValue)} iscritti · associa a ${escapeHtml(stored.slot==='youtube1'?'YouTube 1':'YouTube 2')}</div></a>`;
+  }).join('');
+  return withClearedYouTubeCookie(new Response(`<html><body style="font-family:system-ui;background:#0b0e14;color:#fff;padding:40px;max-width:720px;margin:auto"><h2>Seleziona il canale per ${escapeHtml(stored.slot==='youtube1'?'YouTube 1':'YouTube 2')}</h2><p style="color:#9aa4b2">Google ha restituito più canali. Scegli il canale da associare a questa scheda. Quello già utilizzato nell'altro slot viene mostrato come occupato.</p>${options}</body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}}));
 }
 
 async function fetchYouTubeChannels(env, accessToken){
@@ -325,6 +398,8 @@ async function saveSelectedYouTubeChannel(env,slot,account){
   await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
   return config;
 }
+
+function withClearedYouTubeCookie(response){response.headers.set("Set-Cookie",clearCookieHeader());return response;}
 
 function youtubeDonePage(slot,account){
   return new Response(`<html><body style="font-family:system-ui;background:#0b0e14;color:#fff;padding:40px"><h2>${escapeHtml(slot==='youtube1'?'YouTube 1':'YouTube 2')} collegato ✓</h2><p>Canale: ${escapeHtml(account.title||account.handle||"")}</p><p>Iscritti: ${escapeHtml(account.followerValue||"—")}</p><p>Puoi chiudere questa finestra e tornare al backend.</p><script>setTimeout(()=>window.close(),1200)</script></body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}});
