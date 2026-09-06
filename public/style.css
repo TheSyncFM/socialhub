@@ -162,3 +162,6 @@
 }
 
 .account-extra-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.account-extra-actions .danger{border-color:rgba(255,80,100,.35);color:#ff8d9b}
+
+/* V32: statistiche account sempre visibili a colpo d'occhio */
+.account-actions{min-width:220px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}.account-metrics{display:flex;justify-content:flex-end;gap:7px;width:100%}.metric-box{min-width:78px;padding:8px 10px;border:1px solid #2b3240;border-radius:10px;background:linear-gradient(135deg,#181d27,#12161d);text-align:right;box-shadow:inset 0 1px rgba(255,255,255,.03)}.metric-box span{display:block;color:#7e8796;font-size:9px;text-transform:uppercase;letter-spacing:.8px}.metric-box b{display:block;color:#fff;font-size:16px;line-height:1.1;margin-top:3px}.metric-box.subscriber{border-color:#45336b;background:linear-gradient(135deg,#1a1825,#13151d)}.metric-box.subscriber b{color:#c7afff}.account-actions>.compact{align-self:flex-end}.account-status{align-self:flex-end}@media(max-width:650px){.account-actions{min-width:0;width:100%;align-items:stretch}.account-metrics{justify-content:flex-start}.account-actions>.compact,.account-status{align-self:stretch;text-align:center}}
