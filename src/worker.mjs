@@ -33,6 +33,8 @@ export default {
         return startAccountConnection(id, env, url);
       }
       if (url.pathname === "/api/accounts/callback/twitch" && request.method === "GET") return finishTwitchConnection(request, env, url);
+      if (url.pathname === "/api/accounts/sync/twitch" && request.method === "POST") return syncTwitchAccount(env);
+      if (url.pathname === "/api/accounts/disconnect/twitch" && request.method === "POST") return disconnectTwitchAccount(env);
       if (url.pathname.startsWith("/api/publish") && request.method === "POST") return preparePublication(request, env);
 
       if (url.pathname.startsWith("/api/media/")) {
@@ -88,30 +90,101 @@ async function startAccountConnection(id, env, url){
 
 async function finishTwitchConnection(request, env, url){
   if(!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) return new Response("Credenziali Twitch non configurate",{status:503});
+  if(!env.SOCIALHUB_DATA) return new Response("KV SOCIALHUB_DATA non collegato",{status:503});
   const state = url.searchParams.get("state");
   const code = url.searchParams.get("code");
   const storedRaw = await env.SOCIALHUB_DATA.get("oauth:twitch:state");
   const stored = storedRaw ? JSON.parse(storedRaw) : null;
   if(!state || !code || !stored || stored.state !== state) return new Response("Stato OAuth non valido",{status:400});
-  const tokenResp = await fetch("https://id.twitch.tv/oauth2/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({client_id:env.TWITCH_CLIENT_ID,client_secret:env.TWITCH_CLIENT_SECRET,code,grant_type:"authorization_code",redirect_uri:`${url.origin}/api/accounts/callback/twitch`})});
-  const token = await tokenResp.json();
-  if(!tokenResp.ok || !token.access_token) return new Response(`Errore Twitch OAuth: ${token.message||"token non ottenuto"}`,{status:502});
-  const headers={"Authorization":`Bearer ${token.access_token}`,"Client-Id":env.TWITCH_CLIENT_ID};
-  const uResp=await fetch("https://api.twitch.tv/helix/users",{headers});
-  const uData=await uResp.json();
-  const user=uData.data?.[0];
-  if(!uResp.ok || !user) return new Response("Profilo Twitch non recuperato",{status:502});
-  const fResp=await fetch(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${encodeURIComponent(user.id)}`,{headers});
-  const fData=await fResp.json();
-  const sResp=await fetch(`https://api.twitch.tv/helix/subscriptions?broadcaster_id=${encodeURIComponent(user.id)}`,{headers});
-  const sData=await sResp.json();
+  await env.SOCIALHUB_DATA.delete("oauth:twitch:state");
+  const tokenResp = await twitchTokenRequest(env, {code, grant_type:"authorization_code", redirect_uri:`${url.origin}/api/accounts/callback/twitch`});
+  const token = tokenResp.data;
+  if(!tokenResp.ok || !token?.access_token) return new Response(`Errore Twitch OAuth: ${token?.message||"token non ottenuto"}`,{status:502});
+  const sync = await fetchTwitchAccountData(env, token.access_token);
+  if(!sync.ok) return new Response(`Account Twitch autorizzato ma dati non recuperati: ${sync.error}`,{status:502});
+  await storeTwitchToken(env, token);
   const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
   config.accounts=config.accounts||{};
-  config.accounts.twitch={connected:true,handle:user.login||user.display_name,followerLabel:"Follower",followerValue:String(fData.total??0),subscriberLabel:"Abbonati",subscriberValue:String(sData.total??0),lastSync:Date.now()};
+  config.accounts.twitch=sync.account;
   await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
-  await env.SOCIALHUB_DATA.put("oauth:twitch:token",JSON.stringify({accessToken:token.access_token,refreshToken:token.refresh_token,expiresIn:token.expires_in,scope:token.scope,updatedAt:Date.now()}));
-  return new Response(`<html><body style="font-family:system-ui;background:#0c0f15;color:#fff;padding:40px"><h2>Twitch collegato ✓</h2><p>Account: ${escapeHtml(user.display_name||user.login)}</p><p>Puoi chiudere questa finestra e tornare al backend.</p><script>setTimeout(()=>window.close(),1200)</script></body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}});
+  return new Response(`<html><body style="font-family:system-ui;background:#0c0f15;color:#fff;padding:40px"><h2>Twitch collegato ✓</h2><p>Account: ${escapeHtml(sync.account.handle)}</p><p>Follower: ${escapeHtml(sync.account.followerValue)}</p><p>Abbonati: ${escapeHtml(sync.account.subscriberValue)}</p><p>Puoi chiudere questa finestra e tornare al backend.</p><script>setTimeout(()=>window.close(),1200)</script></body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}});
 }
+
+async function twitchTokenRequest(env, params){
+  const body = new URLSearchParams({client_id:env.TWITCH_CLIENT_ID,client_secret:env.TWITCH_CLIENT_SECRET,...params});
+  const resp=await fetch("https://id.twitch.tv/oauth2/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+  const data=await resp.json().catch(()=>({message:"Risposta non valida"}));
+  return {ok:resp.ok,data};
+}
+
+async function storeTwitchToken(env, token){
+  await env.SOCIALHUB_DATA.put("oauth:twitch:token",JSON.stringify({accessToken:token.access_token,refreshToken:token.refresh_token,expiresIn:token.expires_in,scope:token.scope,tokenType:token.token_type,updatedAt:Date.now()}));
+}
+
+async function getTwitchToken(env){
+  const raw=await env.SOCIALHUB_DATA.get("oauth:twitch:token");
+  if(!raw) return null;
+  try{return JSON.parse(raw)}catch{return null}
+}
+
+async function fetchTwitchAccountData(env, accessToken){
+  const headers={"Authorization":`Bearer ${accessToken}`,"Client-Id":env.TWITCH_CLIENT_ID};
+  const uResp=await fetch("https://api.twitch.tv/helix/users",{headers});
+  const uData=await uResp.json().catch(()=>({}));
+  if(uResp.status===401) return {ok:false,reauth:true,error:"Token Twitch non valido o scaduto."};
+  const user=uData.data?.[0];
+  if(!uResp.ok || !user) return {ok:false,error:"Profilo Twitch non recuperato."};
+
+  const fResp=await fetch(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${encodeURIComponent(user.id)}`,{headers});
+  const fData=await fResp.json().catch(()=>({}));
+  if(fResp.status===401) return {ok:false,reauth:true,error:"Token Twitch non valido o scaduto."};
+
+  const sResp=await fetch(`https://api.twitch.tv/helix/subscriptions?broadcaster_id=${encodeURIComponent(user.id)}`,{headers});
+  const sData=await sResp.json().catch(()=>({}));
+  if(sResp.status===401) return {ok:false,reauth:true,error:"Token Twitch non valido o scaduto."};
+  // Subscriptions may return 401/403 when scope/eligibility is insufficient; preserve follower data.
+  const subValue = sResp.ok ? String(sData.total ?? 0) : "—";
+  return {ok:true,account:{connected:true,handle:user.login||user.display_name||"",displayName:user.display_name||user.login||"",profileImage:user.profile_image_url||"",broadcasterId:user.id,followerLabel:"Follower",followerValue:String(fData.total??0),subscriberLabel:"Abbonati",subscriberValue:subValue,lastSync:Date.now()}};
+}
+
+async function refreshTwitchToken(env, current){
+  if(!current?.refreshToken) return null;
+  const result=await twitchTokenRequest(env,{grant_type:"refresh_token",refresh_token:current.refreshToken});
+  if(!result.ok || !result.data?.access_token) return null;
+  await storeTwitchToken(env,result.data);
+  return result.data.access_token;
+}
+
+async function syncTwitchAccount(env){
+  if(!env.SOCIALHUB_DATA || !env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) return json({ok:false,error:"Configurazione Twitch/KV incompleta."},503);
+  let token=await getTwitchToken(env);
+  if(!token?.accessToken) return json({ok:false,error:"Twitch non è collegato.",reauth:true},409);
+  let result=await fetchTwitchAccountData(env,token.accessToken);
+  if(!result.ok && result.reauth){
+    const refreshed=await refreshTwitchToken(env,token);
+    if(!refreshed) return json({ok:false,error:"Sessione Twitch scaduta. Ricollega Twitch.",reauth:true},401);
+    result=await fetchTwitchAccountData(env,refreshed);
+  }
+  if(!result.ok) return json({ok:false,error:result.error||"Impossibile aggiornare Twitch."},502);
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};config.accounts.twitch=result.account;
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,account:result.account,config});
+}
+
+async function disconnectTwitchAccount(env){
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV non collegato."},503);
+  const token=await getTwitchToken(env);
+  if(token?.accessToken && env.TWITCH_CLIENT_ID){
+    try{await fetch(`https://id.twitch.tv/oauth2/revoke?client_id=${encodeURIComponent(env.TWITCH_CLIENT_ID)}&token=${encodeURIComponent(token.accessToken)}`,{method:"POST"})}catch{}
+  }
+  await env.SOCIALHUB_DATA.delete("oauth:twitch:token");
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};config.accounts.twitch={connected:false};
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,config});
+}
+
 function escapeHtml(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;')}
 
 async function preparePublication(request, env){
