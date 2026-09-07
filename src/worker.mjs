@@ -16,102 +16,15 @@ const DEFAULT_CONFIG = {
   updatedAt: 0
 };
 
-const ADMIN_COOKIE = "socialhub_admin";
-const ADMIN_MAX_AGE = 60 * 60 * 24 * 7;
-
-async function adminKey(env){
-  const secret = String(env.ADMIN_PASSWORD || "");
-  return crypto.subtle.importKey("raw", new TextEncoder().encode(secret), {name:"HMAC", hash:"SHA-256"}, false, ["sign","verify"]);
-}
-
-function adminTokenPayload(){ return `${Date.now()}.${crypto.randomUUID()}`; }
-
-function base64urlFromBytes(bytes){
-  let s=""; for(const b of bytes) s += String.fromCharCode(b);
-  return btoa(s).replaceAll("+","-").replaceAll("/","_").replace(/=+$/g,"");
-}
-function bytesFromBase64url(input){
-  const s=String(input||"").replaceAll("-","+").replaceAll("_","/");
-  const pad="=".repeat((4-(s.length%4))%4);
-  const bin=atob(s+pad); const out=new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
-  return out;
-}
-async function createAdminCookie(env){
-  if(!env.ADMIN_PASSWORD) throw new Error("ADMIN_PASSWORD non configurata nel Worker.");
-  const payload=adminTokenPayload();
-  const key=await adminKey(env);
-  const sig=await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(payload));
-  return `${base64urlFromBytes(new TextEncoder().encode(payload))}.${base64urlFromBytes(new Uint8Array(sig))}`;
-}
-function getAdminCookie(request){
-  const raw=request.headers.get("Cookie")||"";
-  for(const part of raw.split(";")){ const [k,...rest]=part.trim().split("="); if(k===ADMIN_COOKIE) return decodeURIComponent(rest.join("=")); }
-  return null;
-}
-async function isAdminAuthenticated(request,env){
-  try{
-    if(!env.ADMIN_PASSWORD) return false;
-    const token=getAdminCookie(request); if(!token) return false;
-    const parts=token.split("."); if(parts.length!==2) return false;
-    const payload=new TextDecoder().decode(bytesFromBase64url(parts[0]));
-    const pieces=payload.split("."); const created=Number(pieces[0]);
-    if(!Number.isFinite(created)) return false;
-    if(Date.now()-created > ADMIN_MAX_AGE*1000 || Date.now()-created < -60*1000) return false;
-    const key=await adminKey(env);
-    return await crypto.subtle.verify("HMAC",key,bytesFromBase64url(parts[1]),new TextEncoder().encode(payload));
-  }catch{return false}
-}
-function clearAdminCookie(){
-  return [
-    `${ADMIN_COOKIE}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax`,
-    `${ADMIN_COOKIE}=; Path=/backend; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax`
-  ];
-}
-function setAdminCookie(token){ return `${ADMIN_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${ADMIN_MAX_AGE}; HttpOnly; Secure; SameSite=Lax`; }
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     try {
-      if (url.pathname === "/api/admin/login" && request.method === "POST") {
-        if(!env.ADMIN_PASSWORD) return json({ok:false,error:"ADMIN_PASSWORD non configurata nel Worker."},503);
-        const body=await request.json().catch(()=>({}));
-        const password=String(body?.password||"");
-        if(!password || password !== String(env.ADMIN_PASSWORD)) return json({ok:false,error:"Password non valida."},401);
-        const token=await createAdminCookie(env);
-        return new Response(JSON.stringify({ok:true}),{status:200,headers:{"content-type":"application/json; charset=utf-8","set-cookie":setAdminCookie(token)}});
-      }
-      if (url.pathname === "/api/admin/logout" && (request.method === "POST" || request.method === "GET")) {
-        return logoutResponse(env, url.origin);
-      }
-      if (url.pathname === "/admin-logout" && request.method === "GET") {
-        return logoutResponse(env, url.origin);
-      }
-      if (url.pathname === "/backend" || url.pathname === "/backend/" || url.pathname === "/backend.html") {
-        if (url.searchParams.has("logout")) {
-          return logoutResponse(env, url.origin);
-        }
-        const ok=await isAdminAuthenticated(request,env);
-        const target=ok ? "/backend.html" : "/admin-login.html";
-        const response = await env.ASSETS.fetch(new Request(new URL(target, url.origin), request));
-        const headers = new Headers(response.headers);
-        headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
-        headers.set("pragma", "no-cache");
-        headers.set("expires", "0");
-        headers.set("vary", "Cookie");
-        return new Response(response.body, {status: response.status, statusText: response.statusText, headers});
+      if (url.pathname === "/backend" || url.pathname === "/backend/") {
+        return env.ASSETS.fetch(new Request(new URL("/backend.html", url.origin), request));
       }
 
-      // Public read-only endpoints remain available to the public page.
       if (url.pathname === "/api/config" && request.method === "GET") return getConfig(env);
-
-      // All admin mutations/diagnostics require the admin session.
-      const publicCallback = url.pathname === "/api/accounts/callback/twitch" || url.pathname === "/api/accounts/callback/youtube" || url.pathname === "/api/accounts/youtube/select";
-      const publicMediaGet = url.pathname.startsWith("/api/media/") && request.method === "GET";
-      const isAdminRoute = url.pathname.startsWith("/api/") && url.pathname !== "/api/config" && !publicCallback && !publicMediaGet;
-      if(isAdminRoute && !(await isAdminAuthenticated(request,env))) return json({ok:false,error:"Accesso amministratore richiesto."},401);
-
       if (url.pathname === "/api/config" && request.method === "POST") return saveConfig(request, env);
       if (url.pathname === "/api/diagnostic/config" && request.method === "GET") return diagnosticConfig(env);
 
@@ -154,17 +67,6 @@ export default {
     }
   }
 };
-
-async function logoutResponse(env, origin){
-  const headers = new Headers();
-  headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
-  headers.set("pragma", "no-cache");
-  headers.set("expires", "0");
-  headers.set("location", `${origin}/admin-login.html?logged_out=${Date.now()}`);
-  for (const cookie of clearAdminCookie()) headers.append("set-cookie", cookie);
-  return new Response(null, { status: 303, headers });
-}
-
 
 
 async function diagnosticConfig(env){
