@@ -51,13 +51,15 @@ function getAdminCookie(request){
 }
 async function isAdminAuthenticated(request,env){
   try{
-    if(!env.ADMIN_PASSWORD) return false;
+    if(!env.ADMIN_PASSWORD || !env.SOCIALHUB_DATA) return false;
     const token=getAdminCookie(request); if(!token) return false;
     const parts=token.split("."); if(parts.length!==2) return false;
     const payload=new TextDecoder().decode(bytesFromBase64url(parts[0]));
     const pieces=payload.split("."); const created=Number(pieces[0]);
     if(!Number.isFinite(created)) return false;
     if(Date.now()-created > ADMIN_MAX_AGE*1000 || Date.now()-created < -60*1000) return false;
+    const logoutBefore=Number(await env.SOCIALHUB_DATA.get("admin:logout-before") || "0");
+    if(Number.isFinite(logoutBefore) && created <= logoutBefore) return false;
     const key=await adminKey(env);
     return await crypto.subtle.verify("HMAC",key,bytesFromBase64url(parts[1]),new TextEncoder().encode(payload));
   }catch{return false}
@@ -164,6 +166,9 @@ export default {
 };
 
 async function logoutResponse(env, origin){
+  if (env.SOCIALHUB_DATA) {
+    try { await env.SOCIALHUB_DATA.put("admin:logout-before", String(Date.now())); } catch (e) { console.error("admin logout marker", e); }
+  }
   const headers = new Headers();
   headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
   headers.set("pragma", "no-cache");
