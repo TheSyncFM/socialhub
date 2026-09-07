@@ -139,7 +139,7 @@ function getCookie(request,name){
 function clearCookieHeader(){return "socialhub_yt_state=; Path=/api/accounts/callback/youtube; Max-Age=0; HttpOnly; Secure; SameSite=Lax"}
 
 async function instagramApi(path, token){
-  const base = "https://graph.instagram.com/v25.0";
+  const base = "https://graph.instagram.com/v23.0";
   const u = new URL(base + path);
   u.searchParams.set("access_token", token);
   const resp = await fetch(u.toString(), { headers: { "Accept": "application/json" } });
@@ -151,37 +151,18 @@ async function syncInstagramAccount(env){
   if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"INSTAGRAM_ACCESS_TOKEN non configurato nel Worker."},503);
   if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
 
-  const profile = await instagramApi("/me?fields=user_id,username,name,profile_picture_url,followers_count", env.INSTAGRAM_ACCESS_TOKEN);
+  const profile = await instagramApi("/me?fields=id,username,name,profile_picture_url", env.INSTAGRAM_ACCESS_TOKEN);
   if(!profile.ok){
     const msg = profile.data?.error?.message || `Instagram API errore ${profile.status}`;
     return json({ok:false,error:`Instagram: ${msg}`},502);
   }
 
-  const instagramId = profile.data?.user_id || profile.data?.id || "";
-  if(!instagramId) return json({ok:false,error:"Instagram: l'API non ha restituito l'ID dell'account."},502);
-
   let followerValue = "—";
-  let followerSource = "";
-  let insightsMessage = "";
-
-  // Prefer the direct authenticated profile field so the follower total is read
-  // from Instagram itself and does not depend on the Insights metric.
-  const profileFollowers = profile.data?.followers_count;
-  if(profileFollowers !== undefined && profileFollowers !== null && profileFollowers !== ""){
-    followerValue = String(profileFollowers);
-    followerSource = "profile";
-  } else {
-    // Fallback to Account Insights when the profile field is not returned.
-    const insights = await instagramApi(`/${encodeURIComponent(instagramId)}/insights?metric=follower_count&period=day`, env.INSTAGRAM_ACCESS_TOKEN);
-    if(insights.ok && Array.isArray(insights.data?.data)){
-      const metric = insights.data.data.find(x => x.name === "follower_count");
-      const values = Array.isArray(metric?.values) ? metric.values : [];
-      if(values.length){
-        followerValue = String(values[values.length - 1]?.value ?? "—");
-        followerSource = "insights";
-      }
-    }
-    if(followerValue === "—") insightsMessage = insights.data?.error?.message || `Follower non disponibili (${insights.status})`;
+  const insights = await instagramApi("/me/insights?metric=follower_count&period=day", env.INSTAGRAM_ACCESS_TOKEN);
+  if(insights.ok && Array.isArray(insights.data?.data)){
+    const metric = insights.data.data.find(x => x.name === "follower_count");
+    const values = Array.isArray(metric?.values) ? metric.values : [];
+    if(values.length) followerValue = String(values[values.length - 1]?.value ?? "—");
   }
 
   const raw = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
@@ -195,22 +176,15 @@ async function syncInstagramAccount(env){
     handle: profile.data?.username ? `@${profile.data.username}` : (previous.handle || ""),
     displayName: profile.data?.name || profile.data?.username || "Instagram",
     profileUrl: profile.data?.username ? `https://www.instagram.com/${encodeURIComponent(profile.data.username)}/` : (previous.profileUrl || ""),
-    instagramId,
+    instagramId: profile.data?.id || "",
     profileImage: profile.data?.profile_picture_url || previous.profileImage || "",
     followerLabel: "Follower",
     followerValue,
     lastSync: Date.now(),
-    note: insightsMessage
-      ? `Account Creator/Professionale collegato. Insights follower non disponibili: ${insightsMessage}`
-      : "Account Creator/Professionale collegato tramite Instagram API"
+    note: "Account Creator/Professionale collegato tramite Instagram API"
   };
   await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
-  return json({
-    ok:true,
-    account:config.accounts.instagram,
-    config,
-    message:`Instagram collegato${followerValue !== "—" ? ` · ${followerValue} follower` : " · follower non disponibili"}.`
-  });
+  return json({ok:true,account:config.accounts.instagram,config,message:`Instagram collegato${followerValue !== "—" ? ` · ${followerValue} follower` : ""}.`});
 }
 
 async function disconnectInstagramAccount(env){
