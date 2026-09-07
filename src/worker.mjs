@@ -16,15 +16,121 @@ const DEFAULT_CONFIG = {
   updatedAt: 0
 };
 
+const ADMIN_COOKIE = "socialhub_admin";
+const ADMIN_MAX_AGE = 60 * 60 * 24; // 24 ore; la sessione della scheda viene inoltre gestita da sessionStorage.
+
+function b64url(bytes){
+  let s=""; for(const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replaceAll("+","-").replaceAll("/","_").replace(/=+$/g,"");
+}
+function unb64url(input){
+  const s=String(input||"").replaceAll("-","+").replaceAll("_","/");
+  const pad="=".repeat((4-(s.length%4))%4);
+  const bin=atob(s+pad);
+  const out=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+  return out;
+}
+async function adminKey(env){
+  const secret=String(env.ADMIN_PASSWORD||"");
+  return crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign","verify"]);
+}
+function getAdminCookie(request){
+  const raw=request.headers.get("Cookie")||"";
+  for(const part of raw.split(";")){
+    const [k,...rest]=part.trim().split("=");
+    if(k===ADMIN_COOKIE) return decodeURIComponent(rest.join("="));
+  }
+  return null;
+}
+async function createAdminToken(env){
+  const payload=`${Date.now()}.${crypto.randomUUID()}`;
+  const sig=await crypto.subtle.sign("HMAC",await adminKey(env),new TextEncoder().encode(payload));
+  return `${b64url(new TextEncoder().encode(payload))}.${b64url(new Uint8Array(sig))}`;
+}
+async function isAdminAuthenticated(request,env){
+  try{
+    if(!env.ADMIN_USERNAME || !env.ADMIN_PASSWORD) return false;
+    const token=getAdminCookie(request);
+    if(!token) return false;
+    const parts=token.split(".");
+    if(parts.length!==2) return false;
+    const payload=new TextDecoder().decode(unb64url(parts[0]));
+    const created=Number(payload.split(".")[0]);
+    if(!Number.isFinite(created)) return false;
+    const age=Date.now()-created;
+    if(age< -60000 || age>ADMIN_MAX_AGE*1000) return false;
+    return await crypto.subtle.verify("HMAC",await adminKey(env),unb64url(parts[1]),new TextEncoder().encode(payload));
+  }catch{return false}
+}
+function setAdminCookie(token){
+  return `${ADMIN_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${ADMIN_MAX_AGE}; HttpOnly; Secure; SameSite=Lax`;
+}
+function clearAdminCookies(){
+  return [
+    `${ADMIN_COOKIE}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax`,
+    `${ADMIN_COOKIE}=; Path=/backend; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax`
+  ];
+}
+function noCacheHeaders(headers){
+  headers.set("Cache-Control","no-store, no-cache, must-revalidate, max-age=0");
+  headers.set("Pragma","no-cache");
+  headers.set("Expires","0");
+  headers.set("Vary","Cookie");
+  return headers;
+}
+async function logoutResponse(origin){
+  const headers=noCacheHeaders(new Headers());
+  headers.set("Location",`${origin}/admin-login.html?logged_out=${Date.now()}`);
+  for(const cookie of clearAdminCookies()) headers.append("Set-Cookie",cookie);
+  return new Response(null,{status:303,headers});
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     try {
-      if (url.pathname === "/backend" || url.pathname === "/backend/") {
-        return env.ASSETS.fetch(new Request(new URL("/backend.html", url.origin), request));
+      if (url.pathname === "/api/admin/login" && request.method === "POST") {
+        if(!env.ADMIN_USERNAME || !env.ADMIN_PASSWORD){
+          return json({ok:false,error:"ADMIN_USERNAME e/o ADMIN_PASSWORD non configurati nel Worker."},503);
+        }
+        const body=await request.json().catch(()=>({}));
+        const username=String(body?.username??"").trim();
+        const password=String(body?.password??"");
+        const configuredUsername=String(env.ADMIN_USERNAME??"").trim();
+        const configuredPassword=String(env.ADMIN_PASSWORD??"");
+        if(!configuredUsername || !configuredPassword){
+          return json({ok:false,error:"Credenziali admin non configurate nel Worker. Verifica ADMIN_USERNAME e ADMIN_PASSWORD."},503);
+        }
+        // Ignora solo eventuali spazi/ritorni a capo accidentali inseriti nei valori Cloudflare.
+        const passwordMatches = password === configuredPassword || password === configuredPassword.trim();
+        if(username!==configuredUsername || !passwordMatches){
+          return json({ok:false,error:"Username o password non corretti."},401);
+        }
+        const token=await createAdminToken(env);
+        const headers=noCacheHeaders(new Headers({"Content-Type":"application/json; charset=utf-8"}));
+        headers.set("Set-Cookie",setAdminCookie(token));
+        return new Response(JSON.stringify({ok:true,message:"Login corretto."}),{status:200,headers});
+      }
+      if (url.pathname === "/api/admin/logout" && (request.method === "POST" || request.method === "GET")) {
+        return logoutResponse(url.origin);
+      }
+      if (url.pathname === "/backend" || url.pathname === "/backend/" || url.pathname === "/backend.html") {
+        const ok=await isAdminAuthenticated(request,env);
+        const target=ok ? "/backend.html" : "/admin-login.html";
+        const response=await env.ASSETS.fetch(new Request(new URL(target,url.origin),request));
+        const headers=noCacheHeaders(new Headers(response.headers));
+        return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
       }
 
+      // La configurazione di lettura resta pubblica per la pagina pubblica.
       if (url.pathname === "/api/config" && request.method === "GET") return getConfig(env);
+
+      // Tutte le operazioni amministrative richiedono login. Le callback OAuth e i GET dei media restano pubblici.
+      const publicCallback = url.pathname === "/api/accounts/callback/twitch" || url.pathname === "/api/accounts/callback/youtube" || url.pathname === "/api/accounts/youtube/select";
+      const publicMediaGet = url.pathname.startsWith("/api/media/") && request.method === "GET";
+      const adminApi = url.pathname.startsWith("/api/") && url.pathname !== "/api/config" && !publicCallback && !publicMediaGet;
+      if(adminApi && !(await isAdminAuthenticated(request,env))) return json({ok:false,error:"Accesso amministratore richiesto."},401);
       if (url.pathname === "/api/config" && request.method === "POST") return saveConfig(request, env);
       if (url.pathname === "/api/diagnostic/config" && request.method === "GET") return diagnosticConfig(env);
 
@@ -139,7 +245,7 @@ function getCookie(request,name){
 function clearCookieHeader(){return "socialhub_yt_state=; Path=/api/accounts/callback/youtube; Max-Age=0; HttpOnly; Secure; SameSite=Lax"}
 
 async function instagramApi(path, token){
-  const base = "https://graph.instagram.com/v23.0";
+  const base = "https://graph.instagram.com/v25.0";
   const u = new URL(base + path);
   u.searchParams.set("access_token", token);
   const resp = await fetch(u.toString(), { headers: { "Accept": "application/json" } });
@@ -151,18 +257,37 @@ async function syncInstagramAccount(env){
   if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"INSTAGRAM_ACCESS_TOKEN non configurato nel Worker."},503);
   if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
 
-  const profile = await instagramApi("/me?fields=id,username,name,profile_picture_url", env.INSTAGRAM_ACCESS_TOKEN);
+  const profile = await instagramApi("/me?fields=user_id,username,name,profile_picture_url,followers_count", env.INSTAGRAM_ACCESS_TOKEN);
   if(!profile.ok){
     const msg = profile.data?.error?.message || `Instagram API errore ${profile.status}`;
     return json({ok:false,error:`Instagram: ${msg}`},502);
   }
 
+  const instagramId = profile.data?.user_id || profile.data?.id || "";
+  if(!instagramId) return json({ok:false,error:"Instagram: l'API non ha restituito l'ID dell'account."},502);
+
   let followerValue = "—";
-  const insights = await instagramApi("/me/insights?metric=follower_count&period=day", env.INSTAGRAM_ACCESS_TOKEN);
-  if(insights.ok && Array.isArray(insights.data?.data)){
-    const metric = insights.data.data.find(x => x.name === "follower_count");
-    const values = Array.isArray(metric?.values) ? metric.values : [];
-    if(values.length) followerValue = String(values[values.length - 1]?.value ?? "—");
+  let followerSource = "";
+  let insightsMessage = "";
+
+  // Prefer the direct authenticated profile field so the follower total is read
+  // from Instagram itself and does not depend on the Insights metric.
+  const profileFollowers = profile.data?.followers_count;
+  if(profileFollowers !== undefined && profileFollowers !== null && profileFollowers !== ""){
+    followerValue = String(profileFollowers);
+    followerSource = "profile";
+  } else {
+    // Fallback to Account Insights when the profile field is not returned.
+    const insights = await instagramApi(`/${encodeURIComponent(instagramId)}/insights?metric=follower_count&period=day`, env.INSTAGRAM_ACCESS_TOKEN);
+    if(insights.ok && Array.isArray(insights.data?.data)){
+      const metric = insights.data.data.find(x => x.name === "follower_count");
+      const values = Array.isArray(metric?.values) ? metric.values : [];
+      if(values.length){
+        followerValue = String(values[values.length - 1]?.value ?? "—");
+        followerSource = "insights";
+      }
+    }
+    if(followerValue === "—") insightsMessage = insights.data?.error?.message || `Follower non disponibili (${insights.status})`;
   }
 
   const raw = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
@@ -176,15 +301,22 @@ async function syncInstagramAccount(env){
     handle: profile.data?.username ? `@${profile.data.username}` : (previous.handle || ""),
     displayName: profile.data?.name || profile.data?.username || "Instagram",
     profileUrl: profile.data?.username ? `https://www.instagram.com/${encodeURIComponent(profile.data.username)}/` : (previous.profileUrl || ""),
-    instagramId: profile.data?.id || "",
+    instagramId,
     profileImage: profile.data?.profile_picture_url || previous.profileImage || "",
     followerLabel: "Follower",
     followerValue,
     lastSync: Date.now(),
-    note: "Account Creator/Professionale collegato tramite Instagram API"
+    note: insightsMessage
+      ? `Account Creator/Professionale collegato. Insights follower non disponibili: ${insightsMessage}`
+      : "Account Creator/Professionale collegato tramite Instagram API"
   };
   await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
-  return json({ok:true,account:config.accounts.instagram,config,message:`Instagram collegato${followerValue !== "—" ? ` · ${followerValue} follower` : ""}.`});
+  return json({
+    ok:true,
+    account:config.accounts.instagram,
+    config,
+    message:`Instagram collegato${followerValue !== "—" ? ` · ${followerValue} follower` : " · follower non disponibili"}.`
+  });
 }
 
 async function disconnectInstagramAccount(env){
