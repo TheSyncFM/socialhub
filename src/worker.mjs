@@ -88,13 +88,21 @@ export default {
       if (url.pathname === "/admin-logout" && request.method === "GET") {
         return logoutResponse(env, url.origin);
       }
+      if (url.pathname === "/admin-login.html" || url.pathname === "/admin-login") {
+        return loginPageResponse(url.origin, url.searchParams.has("logged_out"));
+      }
+
       if (url.pathname === "/backend" || url.pathname === "/backend/" || url.pathname === "/backend.html") {
+        // Keep authentication entirely on the /backend route so there is no
+        // dependency on a separate login asset or redirect target.
         if (url.searchParams.has("logout")) {
           return logoutResponse(env, url.origin);
         }
         const ok=await isAdminAuthenticated(request,env);
-        const target=ok ? "/backend.html" : "/admin-login.html";
-        const response = await env.ASSETS.fetch(new Request(new URL(target, url.origin), request));
+        if (!ok) {
+          return loginPageResponse(url.origin, url.searchParams.has("logged_out"));
+        }
+        const response = await env.ASSETS.fetch(new Request(new URL("/backend.html", url.origin), request));
         const headers = new Headers(response.headers);
         headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
         headers.set("pragma", "no-cache");
@@ -160,9 +168,17 @@ async function logoutResponse(env, origin){
   headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
   headers.set("pragma", "no-cache");
   headers.set("expires", "0");
-  headers.set("location", `${origin}/admin-login.html?logged_out=${Date.now()}`);
+  headers.set("location", `${origin}/backend?logged_out=${Date.now()}`);
   for (const cookie of clearAdminCookie()) headers.append("set-cookie", cookie);
   return new Response(null, { status: 303, headers });
+}
+
+function loginPageResponse(origin, loggedOut=false){
+  const message = loggedOut ? "Sessione terminata. Inserisci nuovamente la password per continuare." : "Inserisci la password amministratore per accedere al Control Center.";
+  const safe = message.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;");
+  const html = `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>SocialHub — Accesso Admin</title><style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 0%,rgba(139,92,246,.16),transparent 38%),#090c11;color:#eef2f7;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{width:min(430px,calc(100vw - 32px))}.brand{display:flex;align-items:center;gap:10px;margin-bottom:18px}.dot{width:10px;height:10px;border-radius:50%;background:#8b5cf6;box-shadow:0 0 18px rgba(139,92,246,.65)}.brand strong{font-size:15px}.eyebrow{font-size:10px;letter-spacing:2px;color:#8b5cf6;font-weight:800;margin-bottom:8px}.card{padding:28px;border:1px solid #293140;border-radius:18px;background:linear-gradient(180deg,#151a22,#10141b);box-shadow:0 20px 60px rgba(0,0,0,.38)}h1{margin:0 0 8px;font-size:28px;letter-spacing:-.03em}p{margin:0 0 22px;color:#8f99a8;font-size:13px;line-height:1.5}.field{display:block;margin-bottom:14px}.field span{display:block;font-size:11px;color:#a7b0bd;margin-bottom:7px}.field input{width:100%;padding:12px 13px;border-radius:10px;border:1px solid #303746;background:#0c1016;color:#fff;outline:none;font:inherit}.field input:focus{border-color:#7652df;box-shadow:0 0 0 3px rgba(139,92,246,.12)}button{width:100%;padding:12px 14px;border:0;border-radius:10px;background:#8b5cf6;color:#fff;font-weight:800;cursor:pointer}.status{min-height:20px;margin-top:12px;font-size:11px;color:#8f99a8}.status.error{color:#ff9eaa}.foot{margin-top:14px;text-align:center;font-size:10px;color:#626d7d}</style></head><body><main class="wrap"><div class="brand"><span class="dot"></span><strong>SocialHub · TheSyncFM</strong></div><div class="card"><div class="eyebrow">PRIVATE BACKEND</div><h1>Accesso amministratore</h1><p>${safe}</p><form id="loginForm"><label class="field"><span>Password</span><input id="password" type="password" autocomplete="current-password" required autofocus></label><button type="submit">Accedi al backend</button><div id="status" class="status" aria-live="polite"></div></form></div><div class="foot">Accesso riservato · Sessione protetta</div></main><script>const f=document.getElementById('loginForm'),p=document.getElementById('password'),s=document.getElementById('status');f.addEventListener('submit',async e=>{e.preventDefault();s.className='status';s.textContent='Verifica in corso…';try{const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:p.value})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.error||'Password non valida');window.location.replace('/backend');}catch(err){s.className='status error';s.textContent=err.message||'Accesso non riuscito';p.value='';p.focus();}});</script></body></html>`;
+  return new Response(html,{status:200,headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store, no-cache, must-revalidate, max-age=0","pragma":"no-cache","expires":"0","x-content-type-options":"nosniff"}});
 }
 
 
