@@ -1,172 +1,754 @@
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#090b10;color:#f4f6fa;font:14px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sidebar{width:240px;background:#0d1016;border-right:1px solid #1d222c;padding:22px 16px;position:fixed;inset:0 auto 0 0;min-height:100vh}.brand{font-size:20px;font-weight:800;margin:3px 10px 28px;display:flex;align-items:center;gap:9px}.logo-dot{width:10px;height:10px;border-radius:50%;background:#8b5cf6;box-shadow:0 0 16px #8b5cf6;display:inline-block}.workspace{background:#151922;border:1px solid #242a35;border-radius:10px;padding:11px 12px;margin-bottom:18px;font-weight:700;font-size:12px;display:flex;justify-content:space-between}nav a{display:flex;gap:12px;align-items:center;color:#9199a8;text-decoration:none;padding:11px 12px;border-radius:9px;margin:3px 0}nav a.active,nav a:hover{background:#1a1e29;color:#fff}main{margin-left:240px;padding:34px 42px;max-width:1500px}header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}.eyebrow{font-size:10px;letter-spacing:2px;color:#8b5cf6;font-weight:800}h1{font-size:28px;letter-spacing:-1px;margin:5px 0}.muted{color:#7f8795;margin:4px 0}.secure-badge{background:#151922;border:1px solid #2a303b;border-radius:9px;padding:10px 12px;font-size:11px}.notice{display:flex;align-items:center;justify-content:space-between;gap:15px;background:#10131a;border:1px solid #242a34;border-radius:12px;padding:15px 18px;margin-bottom:18px}.notice div{display:flex;flex-direction:column;gap:3px}.notice span{color:#747d8c;font-size:11px}.primary,.ghost{border-radius:8px;font-weight:800;cursor:pointer}.primary{background:#8b5cf6;color:#fff;border:0;padding:11px 14px}.ghost{background:#171b23;color:#e7eaf0;border:1px solid #2b313c;padding:10px 12px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.stats article,.card{background:#10131a;border:1px solid #202631;border-radius:12px}.stats article{padding:16px;display:flex;align-items:center;gap:12px;position:relative}.stat-icon{width:39px;height:39px;border-radius:10px;background:#191e28;display:grid;place-items:center;font-weight:900;font-size:18px}.stats strong{display:block;font-size:22px;margin-top:2px}.label{font-size:11px;color:#8b93a2}.stats small{color:#737b89;margin-left:5px}.stats em{position:absolute;right:13px;top:13px;color:#8d95a3;font-style:normal;font-size:10px}.card{padding:20px;margin-bottom:18px}.card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}.card h2{font-size:15px;margin:0}.composer-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:18px}label{display:block;color:#9199a8;font-size:11px;font-weight:800;margin-bottom:7px}textarea{width:100%;min-height:180px;resize:vertical;background:#0c0f15;color:#fff;border:1px solid #2a303b;border-radius:9px;padding:12px;font:inherit;outline:none}textarea:focus{border-color:#7250d7}.counter{text-align:right;color:#6e7785;font-size:10px;margin-top:5px}.composer-tools{display:flex;gap:8px;margin-top:10px}.target-list{display:flex;flex-direction:column;gap:7px;max-height:230px;overflow:auto}.target{display:flex;align-items:center;gap:8px;background:#171b23;border:1px solid #242b35;border-radius:8px;padding:9px;color:#c8cdd6;margin:0;cursor:pointer}.target input{accent-color:#8b5cf6}.target span{width:20px;text-align:center}.target b{margin-left:auto;color:#55d89b}.helper{color:#626b78;font-size:10px;line-height:1.5;margin-top:10px}.wide{width:100%;margin-top:10px}.two-col{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}.social-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid #1e242e}.social-name{display:flex;align-items:center;gap:9px;flex:1}.social-name div{display:flex;flex-direction:column;gap:2px}.social-name small{font-size:10px;color:#6e7785}.mini-icon{width:30px;height:30px;background:#191e28;border-radius:8px;display:grid;place-items:center;font-weight:900}.status{color:#77cda2;font-size:10px}.compact{padding:7px 9px;font-size:11px}.event{display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid #1e242e}.date{width:43px;text-align:center;background:#181d26;border-radius:8px;padding:6px 0}.date b{display:block;font-size:17px}.date span{font-size:8px;color:#8b93a2}.event div:nth-child(2){display:flex;flex-direction:column;gap:3px;flex:1}.event span{color:#7d8593;font-size:11px}.badge{font-size:10px!important;padding:5px 8px;border:1px solid #3b274b;border-radius:20px;color:#b79cff!important}.profile-admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.upload-box{display:flex;align-items:center;gap:14px;background:#171b23;border:1px solid #242b35;border-radius:11px;padding:13px}.upload-preview{width:76px;height:76px;flex:0 0 76px;border-radius:50%;overflow:hidden;background:#0d1016;border:1px solid #303746;display:grid;place-items:center;color:#b79cff;font-weight:900;font-size:22px}.upload-preview img{width:100%;height:100%;object-fit:cover}.upload-preview img[hidden]{display:none}.cover-box .cover-preview{width:120px;height:76px;flex:0 0 120px;border-radius:10px;background:#0d1016 center/cover no-repeat;border:1px solid #303746;display:grid;place-items:center;color:#727b89;font-size:10px}.upload-copy{min-width:0;display:flex;flex-direction:column;gap:4px}.upload-copy strong{font-size:12px}.upload-copy small{font-size:10px;color:#6f7785}.upload-actions{display:flex;gap:8px;margin-top:7px}.file-btn{display:inline-flex!important;align-items:center;margin:0!important;color:#fff!important}.file-btn input{display:none}.settings-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.settings-grid div{background:#171b23;border:1px solid #242b35;border-radius:9px;padding:11px}.settings-grid span{display:block;color:#6f7785;font-size:10px}.settings-grid strong{display:block;margin-top:4px;font-size:12px}.publicApp{min-height:100vh;position:relative;isolation:isolate;overflow:hidden;background:#090b10}.publicApp::before{content:"";position:fixed;inset:-3%;background-image:var(--page-cover);background-size:cover;background-position:center;filter:saturate(.9) blur(2px);opacity:.13;transform:scale(1.03);pointer-events:none;z-index:-2}.publicApp::after{content:"";position:fixed;inset:0;background:linear-gradient(180deg,rgba(5,7,11,.62) 0%,rgba(5,7,11,.76) 45%,rgba(5,7,11,.9) 100%);pointer-events:none;z-index:-1}.publicApp:not(.has-page-cover)::before{display:none}.public-wrap{width:min(620px,calc(100% - 32px));margin:0 auto;padding:24px 0 34px;position:relative;z-index:1}.public-top{display:flex;justify-content:space-between;align-items:center}.logo{display:flex;gap:8px;align-items:center;font-weight:900}.live-pill{font-size:10px;color:#b69dff;background:rgba(23,19,35,.88);border:1px solid #3a2d55;padding:7px 9px;border-radius:999px}.hero{text-align:center;padding:42px 0 25px;position:relative;isolation:isolate;border-radius:24px;overflow:hidden}.hero::before{content:"";position:absolute;inset:8% 10% 0;background:radial-gradient(circle at 50% 0%,color-mix(in srgb,var(--accent,#8b5cf6) 14%,transparent),transparent 58%);pointer-events:none;z-index:-1}.hero-avatar-wrap{position:relative;width:88px;height:88px;margin:auto}.hero-avatar,.hero-avatar-img{width:88px;height:88px;border-radius:50%;object-fit:cover;position:absolute;inset:0}.hero-avatar{display:grid;place-items:center;z-index:1;background:radial-gradient(circle at 35% 30%,#23283a,#131720 65%);border:1px solid #303746;color:#b79cff;font-size:25px;font-weight:900;box-shadow:0 16px 45px #0005}.hero-avatar-img{display:block;z-index:2;border:1px solid #303746;box-shadow:0 16px 45px #0005}.hero h1{margin:16px 0 6px;font-size:30px}.hero p{color:#7b8493;margin:0}.link-grid{display:flex;flex-direction:column;gap:12px}.public-link{--accent:#8b5cf6;--accent2:#b79cff;position:relative;display:flex;align-items:center;gap:14px;min-height:84px;background:linear-gradient(135deg,rgba(20,24,33,.95) 0%,rgba(16,19,26,.93) 55%,rgba(13,16,22,.94) 100%);border:1px solid rgba(41,47,59,.92);backdrop-filter:blur(8px);color:#fff;text-decoration:none;padding:14px 16px;border-radius:16px;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease,background .22s ease;overflow:hidden;isolation:isolate}.public-link::before{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 15%,rgba(255,255,255,.06) 45%,transparent 72%);transform:translateX(-120%);transition:transform .7s ease;z-index:-1}.public-link::after{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:0 999px 999px 0}.public-link:hover{transform:translateY(-3px) scale(1.008);border-color:color-mix(in srgb,var(--accent) 42%,#444c5c);box-shadow:0 16px 38px rgba(0,0,0,.34),0 0 26px color-mix(in srgb,var(--accent) 14%,transparent)}.public-link:hover::before{transform:translateX(120%)}.public-link:active{transform:translateY(-1px) scale(1.002)}.public-glow{position:absolute;width:120px;height:120px;right:-48px;top:-55px;border-radius:50%;background:var(--accent);filter:blur(35px);opacity:.08;transition:opacity .22s ease,transform .22s ease;pointer-events:none}.public-link:hover .public-glow{opacity:.2;transform:scale(1.25)}.public-icon{width:48px;height:48px;flex:0 0 48px;border-radius:13px;display:grid;place-items:center;font-weight:950;font-size:19px;background:linear-gradient(145deg,#1c222d,#151922);border:1px solid #303744;color:var(--accent2);box-shadow:inset 0 1px rgba(255,255,255,.03);transition:transform .22s ease,border-color .22s ease}.public-link:hover .public-icon{transform:rotate(-3deg) scale(1.06);border-color:color-mix(in srgb,var(--accent) 45%,#303744)}.public-copy{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}.public-copy .public-eyebrow{font-size:9px;letter-spacing:1.7px;color:#7d8796;font-weight:900}.public-copy strong{font-size:16px;line-height:1.15;letter-spacing:-.2px}.public-copy span:not(.public-eyebrow){font-size:11px;color:#8a93a1;line-height:1.35}.public-arrow{font-size:21px;color:#747e8e;transition:transform .22s ease,color .22s ease}.public-link:hover .public-arrow{transform:translateX(5px);color:#fff} .banner-tag{display:inline-flex;align-items:center;padding:5px 7px;border:1px solid color-mix(in srgb,var(--accent) 25%,#303744);border-radius:999px;color:var(--accent2);background:color-mix(in srgb,var(--accent) 8%,transparent);font-size:9px;font-weight:900;letter-spacing:.7px;white-space:nowrap}.public-link.instagram{--accent:#dd2a7b;--accent2:#f58529}.public-link.youtube{--accent:#ff3030;--accent2:#ff7070}.public-link.twitch{--accent:#9147ff;--accent2:#b98cff}.public-link.kick{--accent:#53e29b;--accent2:#92f0bf}.public-link.tiktok{--accent:#25f4ee;--accent2:#ff4ecd}.public-link.x{--accent:#f2f4f7;--accent2:#ffffff}.public-wrap footer{text-align:center;color:#596170;font-size:10px;margin-top:26px}@media(max-width:1100px){.profile-admin-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.composer-grid,.two-col{grid-template-columns:1fr}.settings-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:720px){.sidebar{width:70px}.sidebar .brand span:last-child,.workspace span,.workspace,nav span{display:none}.sidebar a{justify-content:center}.sidebar .brand{justify-content:center}.sidebar .logo-dot{margin:0}main{margin-left:70px;padding:22px 17px}.stats{grid-template-columns:1fr}header,.notice{align-items:flex-start;flex-direction:column}.settings-grid{grid-template-columns:1fr}.public-wrap{width:min(100% - 24px,620px);padding-top:18px}.public-link{min-height:72px;padding:12px}.public-icon{width:43px;height:43px;flex-basis:43px}}/* V14: artwork belongs to the copy/text area; social marks stay prominent */
-.public-link{
-  min-height:92px;
-  background:linear-gradient(90deg,rgba(15,18,25,.98) 0 105px,rgba(18,22,31,.82) 105px,rgba(15,18,25,.60) 100%);
-}
-.banner-image{
-  position:absolute;
-  top:0;
-  right:0;
-  bottom:0;
-  left:105px;
-  background-image:var(--banner-image);
-  background-size:cover;
-  background-position:center;
-  opacity:.78;
-  filter:saturate(1.20) contrast(1.03);
-  transform:scale(1.035);
-  transform-origin:center;
-  transition:transform .85s cubic-bezier(.2,.75,.2,1),opacity .35s ease,filter .35s ease;
-  z-index:0;
-}
-.banner-overlay{
-  position:absolute;
-  top:0;
-  right:0;
-  bottom:0;
-  left:105px;
-  background:linear-gradient(90deg,rgba(8,10,15,.72) 0%,rgba(8,10,15,.36) 36%,rgba(8,10,15,.18) 68%,rgba(8,10,15,.12) 100%);
-  z-index:1;
-  pointer-events:none;
-}
-.public-link:hover .banner-image{
-  transform:scale(1.09);
-  opacity:.92;
-  filter:saturate(1.28) contrast(1.07);
-}
-.public-link:hover .banner-overlay{
-  background:linear-gradient(90deg,rgba(8,10,15,.64) 0%,rgba(8,10,15,.28) 36%,rgba(8,10,15,.12) 68%,rgba(8,10,15,.06) 100%);
-}
-.public-link::before{z-index:2;}
-.public-glow{z-index:1;}
-.public-icon,.public-copy,.public-arrow,.banner-tag{position:relative;z-index:3;}
-.public-icon{
-  background:rgba(10,13,18,.90);
-  backdrop-filter:blur(7px);
-  border-color:rgba(255,255,255,.14);
-}
-.public-icon img{width:26px;height:26px;object-fit:contain;display:block;}
-.public-link.instagram .public-icon img{width:25px;height:25px;}
-.public-link.youtube .public-icon img{width:27px;height:24px;}
-.public-link.twitch .public-icon img{width:26px;height:26px;}
-.public-link.kick .public-icon img{width:27px;height:27px;}
-.public-link.tiktok .public-icon img{width:26px;height:26px;}
-.public-link.x .public-icon img{width:24px;height:24px;}
-@media(max-width:720px){
-  .public-link{min-height:82px;background:linear-gradient(90deg,rgba(15,18,25,.98) 0 86px,rgba(18,22,31,.82) 86px,rgba(15,18,25,.60) 100%);}
-  .banner-image{left:86px;opacity:.72;}
-  .banner-overlay{left:86px;background:linear-gradient(90deg,rgba(8,10,15,.76) 0%,rgba(8,10,15,.38) 42%,rgba(8,10,15,.12) 100%);}
+const CONFIG_KEY = "site-config-v5";
+const MEDIA_PREFIX = "media:";
+const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
+const ALLOWED_KEYS = new Set([
+  "profile-avatar","profile-cover",
+  "banner-instagram","banner-youtube1","banner-youtube2",
+  "banner-twitch","banner-kick","banner-tiktok","banner-x"
+]);
+const ALLOWED_MIME = new Set(["image/png","image/jpeg","image/webp"]);
+
+const DEFAULT_CONFIG = {
+  page: { title: "TheSyncFM", bio: "Seguici su tutti i nostri canali." },
+  socials: {},
+  accounts: {},
+  composer: { draft: "", updatedAt: 0 },
+  updatedAt: 0
+};
+
+const ADMIN_COOKIE = "socialhub_admin";
+const ADMIN_MAX_AGE = 60 * 60 * 24 * 7;
+
+async function adminKey(env){
+  const secret = String(env.ADMIN_PASSWORD || "");
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(secret), {name:"HMAC", hash:"SHA-256"}, false, ["sign","verify"]);
 }
 
-/* V15 — Linktree-inspired public layout: compact pills, centered copy, artwork behind text only */
-.public-wrap{width:min(610px,calc(100% - 28px));padding:24px 0 28px}
-.public-top{padding:0 2px}
-.hero{padding:34px 0 22px}
-.hero-avatar-wrap,.hero-avatar,.hero-avatar-img{width:86px;height:86px}
-.hero h1{font-size:28px;margin-top:13px}
-.hero p{font-size:12px}
-.link-grid{gap:10px}
-.public-link{
-  min-height:64px;
-  padding:8px 12px 8px 11px;
-  border-radius:18px;
-  background:rgba(14,17,24,.96);
-  box-shadow:0 4px 18px rgba(0,0,0,.16),inset 0 1px rgba(255,255,255,.015);
-}
-/* artwork occupies only the text/content region; icon area stays clean */
-.public-link .banner-image{
-  left:62px;
-  right:0;
-  opacity:.30;
-  background-size:cover;
-  background-position:center;
-  filter:saturate(1.15) contrast(1.03);
-  transform:scale(1.01);
-  transition:transform .65s cubic-bezier(.2,.75,.2,1),opacity .28s ease,filter .28s ease;
-}
-.public-link .banner-overlay{
-  left:62px;
-  right:0;
-  background:linear-gradient(90deg,rgba(9,11,16,.76) 0%,rgba(9,11,16,.34) 48%,rgba(9,11,16,.18) 100%);
-}
-.public-link:hover .banner-image{transform:scale(1.07);opacity:.50;filter:saturate(1.3) contrast(1.06)}
-.public-link:hover .banner-overlay{background:linear-gradient(90deg,rgba(9,11,16,.64) 0%,rgba(9,11,16,.22) 48%,rgba(9,11,16,.10) 100%)}
-.public-link::after{top:11px;bottom:11px;width:2px;opacity:.9}
-.public-icon{
-  width:42px;height:42px;flex-basis:42px;border-radius:12px;
-  background:rgba(8,10,14,.82);border-color:rgba(255,255,255,.10);
-  box-shadow:0 2px 8px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.04);
-  backdrop-filter:blur(6px);
-}
-.public-icon img{width:22px;height:22px;display:block;object-fit:contain;filter:none!important;opacity:1!important;}
-.public-link.youtube .public-icon{background:rgba(12,14,18,.88);}
-.public-link.youtube .public-icon img{width:25px!important;height:22px!important;filter:none!important;opacity:1!important;}
+function adminTokenPayload(){ return `${Date.now()}.${crypto.randomUUID()}`; }
 
-.public-link.instagram .public-icon img{width:22px;height:22px}
-.public-link.youtube .public-icon img{width:24px;height:22px}
-.public-link.twitch .public-icon img{width:23px;height:23px}
-.public-link.kick .public-icon img{width:23px;height:23px}
-.public-link.tiktok .public-icon img{width:23px;height:23px}
-.public-link.x .public-icon img{width:22px;height:22px}
-.public-copy{align-items:center;text-align:center;gap:1px;justify-content:center}
-.public-copy .public-eyebrow{font-size:0;display:none}
-.public-copy strong{font-size:13px;line-height:1.1;letter-spacing:.1px;text-shadow:0 1px 10px rgba(0,0,0,.35)}
-.public-copy span:not(.public-eyebrow){font-size:9px;color:rgba(221,226,236,.72);line-height:1.2;text-shadow:0 1px 8px rgba(0,0,0,.55)}
-.public-arrow{font-size:17px;color:#97a0ae;min-width:21px;text-align:center}
-.banner-tag{font-size:8px;padding:4px 6px;min-width:31px;justify-content:center}
-.public-glow{width:100px;height:100px;right:-35px;top:-42px;opacity:.05}
-.public-link:hover{transform:translateY(-2px) scale(1.004);box-shadow:0 10px 24px rgba(0,0,0,.24),0 0 20px color-mix(in srgb,var(--accent) 9%,transparent)}
-.public-wrap footer{margin-top:22px}
-@media(max-width:720px){
- .public-wrap{width:min(100% - 20px,610px);padding-top:14px}
- .hero{padding-top:28px}
- .public-link{min-height:58px;padding:7px 10px 7px 9px;border-radius:16px}
- .public-link .banner-image,.public-link .banner-overlay{left:58px}
- .public-icon{width:40px;height:40px;flex-basis:40px;border-radius:11px}
- .public-copy strong{font-size:12px}
- .public-copy span:not(.public-eyebrow){font-size:8.5px}
- .public-arrow{font-size:16px}
+function base64urlFromBytes(bytes){
+  let s=""; for(const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replaceAll("+","-").replaceAll("/","_").replace(/=+$/g,"");
 }
-.text-input{width:100%;background:#0c0f15;color:#fff;border:1px solid #2a303b;border-radius:8px;padding:9px 10px;font:inherit;outline:none;margin-bottom:9px}.text-input:focus{border-color:#7250d7}.page-editor-grid{display:grid;grid-template-columns:.75fr 1.25fr;gap:18px}.editor-list{display:flex;flex-direction:column;gap:9px;max-height:420px;overflow:auto}.editor-row{display:flex;align-items:flex-start;gap:10px;background:#171b23;border:1px solid #242b35;border-radius:10px;padding:10px}.editor-row>img{width:28px;height:28px;object-fit:contain;flex:0 0 28px}.editor-fields{flex:1}.editor-fields strong{display:block;font-size:11px;margin-bottom:6px}.editor-fields .text-input{margin-bottom:6px;font-size:11px}.social-row-banner .row-banner-preview{width:180px;height:42px;border-radius:8px;background-position:center;background-size:cover;border:1px solid #2b313c;flex:0 0 180px}@media(max-width:900px){.page-editor-grid{grid-template-columns:1fr}.social-row-banner{flex-wrap:wrap}.social-row-banner .row-banner-preview{flex:1 1 100%;width:auto}}
-
-/* V24: artwork fills the entire social card */
-.public-link{background:rgba(9,12,17,.32)!important;}
-.public-link .banner-image{left:0!important;right:0!important;top:0!important;bottom:0!important;}
-.public-link .banner-overlay{left:0!important;right:0!important;top:0!important;bottom:0!important;background:linear-gradient(90deg,rgba(8,10,14,.62),rgba(8,10,14,.30) 55%,rgba(8,10,14,.42))!important;}
-.public-link .public-copy strong,.public-link .public-copy span:not(.public-eyebrow){text-shadow:0 1px 12px rgba(0,0,0,.70);}
-.public-icon{background:rgba(7,10,14,.86)!important;backdrop-filter:blur(7px);}
-
-/* V26 — sfondo pubblico grigio scuro con fumo verde/viola nella parte bassa */
-.publicApp{
-  background:
-    radial-gradient(55% 28% at 18% 100%, rgba(34, 197, 94, .17) 0%, rgba(34,197,94,.08) 28%, transparent 72%),
-    radial-gradient(52% 30% at 82% 100%, rgba(139, 92, 246, .22) 0%, rgba(139,92,246,.10) 28%, transparent 72%),
-    radial-gradient(70% 26% at 50% 105%, rgba(90, 100, 110, .20) 0%, rgba(70,78,88,.10) 34%, transparent 76%),
-    linear-gradient(180deg, #282c32 0%, #24282e 58%, #20242a 100%);
+function bytesFromBase64url(input){
+  const s=String(input||"").replaceAll("-","+").replaceAll("_","/");
+  const pad="=".repeat((4-(s.length%4))%4);
+  const bin=atob(s+pad); const out=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+  return out;
 }
-.publicApp::before{
-  background-image:var(--page-cover);
-  opacity:.055;
-  filter:saturate(.72) blur(3px);
+async function createAdminCookie(env){
+  if(!env.ADMIN_PASSWORD) throw new Error("ADMIN_PASSWORD non configurata nel Worker.");
+  const payload=adminTokenPayload();
+  const key=await adminKey(env);
+  const sig=await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(payload));
+  return `${base64urlFromBytes(new TextEncoder().encode(payload))}.${base64urlFromBytes(new Uint8Array(sig))}`;
 }
-.publicApp::after{
-  background:
-    radial-gradient(28% 18% at 12% 94%, rgba(90, 98, 108, .28) 0%, rgba(90,98,108,.10) 44%, transparent 76%),
-    radial-gradient(24% 20% at 34% 97%, rgba(70, 80, 92, .26) 0%, rgba(70,80,92,.10) 46%, transparent 78%),
-    radial-gradient(30% 21% at 58% 98%, rgba(72, 80, 92, .24) 0%, rgba(72,80,92,.09) 46%, transparent 78%),
-    radial-gradient(25% 19% at 80% 95%, rgba(104, 94, 120, .24) 0%, rgba(104,94,120,.09) 46%, transparent 78%),
-    radial-gradient(60% 28% at 50% 100%, rgba(14, 18, 24, .10) 0%, rgba(12,15,20,.28) 54%, rgba(8,10,14,.48) 100%),
-    linear-gradient(180deg, rgba(24,27,33,.16) 0%, rgba(24,27,33,.04) 58%, rgba(18,21,27,.18) 100%);
-  filter:blur(10px);
-  transform:scale(1.05);
+function getAdminCookie(request){
+  const raw=request.headers.get("Cookie")||"";
+  for(const part of raw.split(";")){ const [k,...rest]=part.trim().split("="); if(k===ADMIN_COOKIE) return decodeURIComponent(rest.join("=")); }
+  return null;
+}
+async function isAdminAuthenticated(request,env){
+  try{
+    if(!env.ADMIN_PASSWORD) return false;
+    const token=getAdminCookie(request); if(!token) return false;
+    const parts=token.split("."); if(parts.length!==2) return false;
+    const payload=new TextDecoder().decode(bytesFromBase64url(parts[0]));
+    const pieces=payload.split("."); const created=Number(pieces[0]);
+    if(!Number.isFinite(created)) return false;
+    if(Date.now()-created > ADMIN_MAX_AGE*1000 || Date.now()-created < -60*1000) return false;
+    const key=await adminKey(env);
+    return await crypto.subtle.verify("HMAC",key,bytesFromBase64url(parts[1]),new TextEncoder().encode(payload));
+  }catch{return false}
+}
+function clearAdminCookie(){
+  return [
+    `${ADMIN_COOKIE}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax`,
+    `${ADMIN_COOKIE}=; Path=/backend; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax`
+  ];
+}
+function setAdminCookie(token){ return `${ADMIN_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${ADMIN_MAX_AGE}; HttpOnly; Secure; SameSite=Lax`; }
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    try {
+      if (url.pathname === "/api/admin/login" && request.method === "POST") {
+        if(!env.ADMIN_PASSWORD) return json({ok:false,error:"ADMIN_PASSWORD non configurata nel Worker."},503);
+        const body=await request.json().catch(()=>({}));
+        const password=String(body?.password||"");
+        if(!password || password !== String(env.ADMIN_PASSWORD)) return json({ok:false,error:"Password non valida."},401);
+        const token=await createAdminCookie(env);
+        return new Response(JSON.stringify({ok:true}),{status:200,headers:{"content-type":"application/json; charset=utf-8","set-cookie":setAdminCookie(token)}});
+      }
+      if (url.pathname === "/api/admin/logout" && (request.method === "POST" || request.method === "GET")) {
+        return logoutResponse(env, url.origin);
+      }
+      if (url.pathname === "/admin-logout" && request.method === "GET") {
+        return logoutResponse(env, url.origin);
+      }
+      if (url.pathname === "/backend" || url.pathname === "/backend/" || url.pathname === "/backend.html") {
+        if (url.searchParams.has("logout")) {
+          return logoutResponse(env, url.origin);
+        }
+        const ok=await isAdminAuthenticated(request,env);
+        const target=ok ? "/backend.html" : "/admin-login.html";
+        const response = await env.ASSETS.fetch(new Request(new URL(target, url.origin), request));
+        const headers = new Headers(response.headers);
+        headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
+        headers.set("pragma", "no-cache");
+        headers.set("expires", "0");
+        headers.set("vary", "Cookie");
+        return new Response(response.body, {status: response.status, statusText: response.statusText, headers});
+      }
+
+      // Public read-only endpoints remain available to the public page.
+      if (url.pathname === "/api/config" && request.method === "GET") return getConfig(env);
+
+      // All admin mutations/diagnostics require the admin session.
+      const publicCallback = url.pathname === "/api/accounts/callback/twitch" || url.pathname === "/api/accounts/callback/youtube" || url.pathname === "/api/accounts/youtube/select";
+      const publicMediaGet = url.pathname.startsWith("/api/media/") && request.method === "GET";
+      const isAdminRoute = url.pathname.startsWith("/api/") && url.pathname !== "/api/config" && !publicCallback && !publicMediaGet;
+      if(isAdminRoute && !(await isAdminAuthenticated(request,env))) return json({ok:false,error:"Accesso amministratore richiesto."},401);
+
+      if (url.pathname === "/api/config" && request.method === "POST") return saveConfig(request, env);
+      if (url.pathname === "/api/diagnostic/config" && request.method === "GET") return diagnosticConfig(env);
+
+      if (url.pathname.startsWith("/api/accounts/connect/")) {
+        const id = decodeURIComponent(url.pathname.slice("/api/accounts/connect/".length));
+        if (request.method !== "GET") return json({ ok:false, error:"Metodo non supportato" },405);
+        return startAccountConnection(id, env, url);
+      }
+      if (url.pathname === "/api/accounts/callback/twitch" && request.method === "GET") return finishTwitchConnection(request, env, url);
+      if (url.pathname === "/api/accounts/sync/twitch" && request.method === "POST") return syncTwitchAccount(env);
+      if (url.pathname === "/api/accounts/disconnect/twitch" && request.method === "POST") return disconnectTwitchAccount(env);
+      if (url.pathname === "/api/accounts/callback/youtube" && request.method === "GET") return finishYouTubeConnection(request, env, url);
+      if (url.pathname === "/api/accounts/youtube/select" && request.method === "GET") return selectYouTubeChannel(request, env, url);
+      if (url.pathname.startsWith("/api/accounts/sync/youtube") && request.method === "POST") {
+        const slot = decodeURIComponent(url.pathname.slice("/api/accounts/sync/youtube/".length));
+        return syncYouTubeAccount(env, slot);
+      }
+      if (url.pathname.startsWith("/api/accounts/disconnect/youtube") && request.method === "POST") {
+        const slot = decodeURIComponent(url.pathname.slice("/api/accounts/disconnect/youtube/".length));
+        return disconnectYouTubeAccount(env, slot);
+      }
+      if (url.pathname === "/api/accounts/sync/instagram" && request.method === "POST") return syncInstagramAccount(env);
+      if (url.pathname === "/api/accounts/disconnect/instagram" && request.method === "POST") return disconnectInstagramAccount(env);
+      if (url.pathname.startsWith("/api/publish") && request.method === "POST") return preparePublication(request, env);
+
+      if (url.pathname.startsWith("/api/media/")) {
+        const key = decodeURIComponent(url.pathname.slice("/api/media/".length));
+        if (!ALLOWED_KEYS.has(key)) return json({ ok:false, error:"Media non autorizzato" }, 400);
+        if (!env.SOCIALHUB_DATA) return json({ ok:false, error:"KV SOCIALHUB_DATA non collegato al Worker." }, 503);
+        if (request.method === "GET") return getMedia(env, key);
+        if (request.method === "POST") return saveMedia(request, env, key);
+        if (request.method === "DELETE") return deleteMedia(env, key);
+        return json({ ok:false, error:"Metodo non supportato" }, 405);
+      }
+
+      return env.ASSETS.fetch(request);
+    } catch (error) {
+      console.error(error);
+      return json({ ok:false, error:error?.message || "Errore interno" }, 500);
+    }
+  }
+};
+
+async function logoutResponse(env, origin){
+  const headers = new Headers();
+  headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
+  headers.set("pragma", "no-cache");
+  headers.set("expires", "0");
+  headers.set("location", `${origin}/admin-login.html?logged_out=${Date.now()}`);
+  for (const cookie of clearAdminCookie()) headers.append("set-cookie", cookie);
+  return new Response(null, { status: 303, headers });
 }
 
-.account-extra-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.account-extra-actions .danger{border-color:rgba(255,80,100,.35);color:#ff8d9b}
-
-/* V32: statistiche account sempre visibili a colpo d'occhio */
-.account-actions{min-width:220px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}.account-metrics{display:flex;justify-content:flex-end;gap:7px;width:100%}.metric-box{min-width:78px;padding:8px 10px;border:1px solid #2b3240;border-radius:10px;background:linear-gradient(135deg,#181d27,#12161d);text-align:right;box-shadow:inset 0 1px rgba(255,255,255,.03)}.metric-box span{display:block;color:#7e8796;font-size:9px;text-transform:uppercase;letter-spacing:.8px}.metric-box b{display:block;color:#fff;font-size:16px;line-height:1.1;margin-top:3px}.metric-box.subscriber{border-color:#45336b;background:linear-gradient(135deg,#1a1825,#13151d)}.metric-box.subscriber b{color:#c7afff}.account-actions>.compact{align-self:flex-end}.account-status{align-self:flex-end}@media(max-width:650px){.account-actions{min-width:0;width:100%;align-items:stretch}.account-metrics{justify-content:flex-start}.account-actions>.compact,.account-status{align-self:stretch;text-align:center}}
 
 
-.diagnostic-inline{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;padding:8px 10px;border:1px solid #252c38;background:#0f131a;border-radius:10px;color:#8d98a7;font-size:11px;line-height:1.3}.diag-item{padding:4px 8px;border-radius:999px;border:1px solid #2c3440}.diag-item.ok{color:#78d6a1;border-color:#174f34;background:#0d1d15}.diag-item.bad{color:#ff8d8d;border-color:#5a2323;background:#211010}.diag-item b{font-weight:700;color:inherit}
+async function diagnosticConfig(env){
+  return json({
+    ok:true,
+    checks:{
+      twitchClientId:Boolean(env.TWITCH_CLIENT_ID),
+      twitchClientSecret:Boolean(env.TWITCH_CLIENT_SECRET),
+      googleClientId:Boolean(env.GOOGLE_CLIENT_ID),
+      googleClientSecret:Boolean(env.GOOGLE_CLIENT_SECRET),
+      kv:Boolean(env.SOCIALHUB_DATA),
+      assets:Boolean(env.ASSETS)
+    },
+    timestamp:Date.now()
+  });
+}
 
-.publish-result{display:flex;align-items:center;gap:10px;margin-top:8px;padding:10px 12px;border:1px solid #2a303b;background:#0f131a;border-radius:10px;color:#9aa4b2;font-size:12px;min-height:38px}.publish-result.ok{border-color:#1f6b4b;background:#0e1914;color:#a5e3c3}.publish-result.warning{border-color:#6b5322;background:#1d180d;color:#e8d39b}.publish-result.error{border-color:#6a2730;background:#1a1013;color:#f0b2b8}.result-badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.08em;white-space:nowrap}.result-badge.idle{border:1px solid #394252;color:#a9b2c0;background:#141922}.result-badge.warning{border:1px solid #6b5322;color:#f0d18a;background:#211a10}.result-badge.error{border:1px solid #6a2730;color:#ffb9c0;background:#221014}.result-badge.ok{border:1px solid #1f6b4b;color:#a5e3c3;background:#101b15}
+
+function bytesToBase64Url(bytes){
+  let binary="";
+  for(const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replaceAll("+","-").replaceAll("/","_").replace(/=+$/g,"");
+}
+function base64UrlToBytes(input){
+  const s=String(input||"").replaceAll("-","+").replaceAll("_","/");
+  const pad="=".repeat((4-(s.length%4))%4);
+  const bin=atob(s+pad);
+  const out=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+  return out;
+}
+async function hmacState(env,payload){
+  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(env.GOOGLE_CLIENT_SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+  const sig=new Uint8Array(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(payload)));
+  return bytesToBase64Url(sig);
+}
+async function makeYouTubeState(env,slot){
+  const payload=`${slot}.${Date.now()}.${crypto.randomUUID()}`;
+  const sig=await hmacState(env,payload);
+  return `${bytesToBase64Url(new TextEncoder().encode(payload))}.${sig}`;
+}
+async function verifyYouTubeState(env,token){
+  try{
+    const parts=String(token||"").split(".");
+    if(parts.length<2) return null;
+    const sig=parts.pop();
+    const payloadB64=parts.join(".");
+    const payload=new TextDecoder().decode(base64UrlToBytes(payloadB64));
+    const expected=await hmacState(env,payload);
+    const a=base64UrlToBytes(sig), b=base64UrlToBytes(expected);
+    if(a.length!==b.length) return null;
+    let diff=0; for(let i=0;i<a.length;i++) diff|=a[i]^b[i];
+    if(diff!==0) return null;
+    const parts2=payload.split(".");
+    const slot=parts2[0], created=Number(parts2[1]);
+    if(!["youtube1","youtube2"].includes(slot) || !Number.isFinite(created)) return null;
+    const age=Date.now()-created;
+    if(age>10*60*1000 || age < -60*1000) return null;
+    return {slot,createdAt:created};
+  }catch{return null}
+}
+function getCookie(request,name){
+  const raw=request.headers.get("Cookie")||"";
+  for(const part of raw.split(";")){
+    const [k,...rest]=part.trim().split("=");
+    if(k===name) return decodeURIComponent(rest.join("="));
+  }
+  return null;
+}
+function clearCookieHeader(){return "socialhub_yt_state=; Path=/api/accounts/callback/youtube; Max-Age=0; HttpOnly; Secure; SameSite=Lax"}
+
+async function instagramApi(path, token){
+  const base = "https://graph.instagram.com/v25.0";
+  const u = new URL(base + path);
+  u.searchParams.set("access_token", token);
+  const resp = await fetch(u.toString(), { headers: { "Accept": "application/json" } });
+  const data = await resp.json().catch(() => ({}));
+  return { ok: resp.ok, data, status: resp.status };
+}
+
+async function syncInstagramAccount(env){
+  if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"INSTAGRAM_ACCESS_TOKEN non configurato nel Worker."},503);
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+
+  const profile = await instagramApi("/me?fields=user_id,username,name,profile_picture_url,followers_count", env.INSTAGRAM_ACCESS_TOKEN);
+  if(!profile.ok){
+    const msg = profile.data?.error?.message || `Instagram API errore ${profile.status}`;
+    return json({ok:false,error:`Instagram: ${msg}`},502);
+  }
+
+  const instagramId = profile.data?.user_id || profile.data?.id || "";
+  if(!instagramId) return json({ok:false,error:"Instagram: l'API non ha restituito l'ID dell'account."},502);
+
+  let followerValue = "—";
+  let followerSource = "";
+  let insightsMessage = "";
+
+  // Prefer the direct authenticated profile field so the follower total is read
+  // from Instagram itself and does not depend on the Insights metric.
+  const profileFollowers = profile.data?.followers_count;
+  if(profileFollowers !== undefined && profileFollowers !== null && profileFollowers !== ""){
+    followerValue = String(profileFollowers);
+    followerSource = "profile";
+  } else {
+    // Fallback to Account Insights when the profile field is not returned.
+    const insights = await instagramApi(`/${encodeURIComponent(instagramId)}/insights?metric=follower_count&period=day`, env.INSTAGRAM_ACCESS_TOKEN);
+    if(insights.ok && Array.isArray(insights.data?.data)){
+      const metric = insights.data.data.find(x => x.name === "follower_count");
+      const values = Array.isArray(metric?.values) ? metric.values : [];
+      if(values.length){
+        followerValue = String(values[values.length - 1]?.value ?? "—");
+        followerSource = "insights";
+      }
+    }
+    if(followerValue === "—") insightsMessage = insights.data?.error?.message || `Follower non disponibili (${insights.status})`;
+  }
+
+  const raw = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  const config = raw ? JSON.parse(raw) : structuredClone(DEFAULT_CONFIG);
+  config.accounts = config.accounts || {};
+  const previous = config.accounts.instagram || {};
+  config.accounts.instagram = {
+    ...previous,
+    connected: true,
+    accountType: "professional",
+    handle: profile.data?.username ? `@${profile.data.username}` : (previous.handle || ""),
+    displayName: profile.data?.name || profile.data?.username || "Instagram",
+    profileUrl: profile.data?.username ? `https://www.instagram.com/${encodeURIComponent(profile.data.username)}/` : (previous.profileUrl || ""),
+    instagramId,
+    profileImage: profile.data?.profile_picture_url || previous.profileImage || "",
+    followerLabel: "Follower",
+    followerValue,
+    lastSync: Date.now(),
+    note: insightsMessage
+      ? `Account Creator/Professionale collegato. Insights follower non disponibili: ${insightsMessage}`
+      : "Account Creator/Professionale collegato tramite Instagram API"
+  };
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
+  return json({
+    ok:true,
+    account:config.accounts.instagram,
+    config,
+    message:`Instagram collegato${followerValue !== "—" ? ` · ${followerValue} follower` : " · follower non disponibili"}.`
+  });
+}
+
+async function disconnectInstagramAccount(env){
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+  const raw = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  const config = raw ? JSON.parse(raw) : structuredClone(DEFAULT_CONFIG);
+  config.accounts = config.accounts || {};
+  const previous = config.accounts.instagram || {};
+  config.accounts.instagram = {
+    ...previous,
+    connected: false,
+    followerLabel: "Follower",
+    followerValue: "—",
+    lastSync: 0
+  };
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
+  return json({ok:true,config,message:"Instagram scollegato dal pannello."});
+}
+
+const PLATFORM_SETUP = {
+  instagram: "Instagram: puoi usare un account personale con configurazione manuale oppure un account professionale per le integrazioni API.",
+  youtube1: "YouTube 1: configura le credenziali OAuth Google (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET).",
+  youtube2: "YouTube 2: usa la stessa autorizzazione Google; il backend permette di gestire due canali.",
+  twitch: "Twitch: configura TWITCH_CLIENT_ID e TWITCH_CLIENT_SECRET (la tua app Twitch esistente può essere riutilizzata).",
+  kick: "Kick: configura l'app OAuth/API Kick quando avremo le credenziali developer.",
+  tiktok: "TikTok: configura TikTok Login Kit e gli scope user.info.stats e video.publish.",
+  x: "X: l'API attuale è pay-per-use, quindi viene lasciata disattivata per rispettare il requisito €0."
+};
+
+async function startAccountConnection(id, env, url){
+  const allowed = ["instagram","youtube1","youtube2","twitch","kick","tiktok","x"];
+  if(!allowed.includes(id)) return json({ok:false,error:"Account non riconosciuto"},400);
+  if(id === "x") return json({ok:false,error:PLATFORM_SETUP.x},402);
+  if(id === "instagram") {
+    if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"Instagram: configura INSTAGRAM_ACCESS_TOKEN nel Worker dopo aver generato il token dalla Meta App."},503);
+    return syncInstagramAccount(env);
+  }
+  if(id === "youtube1" || id === "youtube2"){
+    if(!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return json({ok:false,error:PLATFORM_SETUP[id]},503);
+    if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+    const state = await makeYouTubeState(env,id);
+    const redirect = `${url.origin}/api/accounts/callback/youtube`;
+    const oauth = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    oauth.searchParams.set("client_id", env.GOOGLE_CLIENT_ID);
+    oauth.searchParams.set("redirect_uri", redirect);
+    oauth.searchParams.set("response_type", "code");
+    oauth.searchParams.set("access_type", "offline");
+    oauth.searchParams.set("prompt", "consent");
+    oauth.searchParams.set("include_granted_scopes", "true");
+    oauth.searchParams.set("scope", ["https://www.googleapis.com/auth/youtube.readonly","https://www.googleapis.com/auth/youtube.upload","https://www.googleapis.com/auth/youtube.channel-memberships.creator"].join(" "));
+    oauth.searchParams.set("state", state);
+    const response=json({ok:true,ready:true,url:oauth.toString(),message:`Apro Google per autorizzare ${id === "youtube1" ? "YouTube 1" : "YouTube 2"}.`});
+    response.headers.set("Set-Cookie",`socialhub_yt_state=${encodeURIComponent(state)}; Path=/api/accounts/callback/youtube; Max-Age=600; HttpOnly; Secure; SameSite=Lax`);
+    return response;
+  }
+  if(id === "twitch"){
+    if(!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) return json({ok:false,error:PLATFORM_SETUP.twitch},503);
+    const state = crypto.randomUUID();
+    await env.SOCIALHUB_DATA.put("oauth:twitch:state", JSON.stringify({state, createdAt:Date.now()}), {expirationTtl:600});
+    const redirect = `${url.origin}/api/accounts/callback/twitch`;
+    const oauth = new URL("https://id.twitch.tv/oauth2/authorize");
+    oauth.searchParams.set("client_id", env.TWITCH_CLIENT_ID);
+    oauth.searchParams.set("redirect_uri", redirect);
+    oauth.searchParams.set("response_type","code");
+    oauth.searchParams.set("scope","user:read:email moderator:read:followers channel:read:subscriptions");
+    oauth.searchParams.set("state",state);
+    return json({ok:true,ready:true,url:oauth.toString(),message:"Apro Twitch per autorizzare l'account."});
+  }
+  return json({ok:false,error:PLATFORM_SETUP[id]},503);
+}
+
+
+async function finishTwitchConnection(request, env, url){
+  if(!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) return new Response("Credenziali Twitch non configurate",{status:503});
+  if(!env.SOCIALHUB_DATA) return new Response("KV SOCIALHUB_DATA non collegato",{status:503});
+  const state = url.searchParams.get("state");
+  const code = url.searchParams.get("code");
+  const storedRaw = await env.SOCIALHUB_DATA.get("oauth:twitch:state");
+  const stored = storedRaw ? JSON.parse(storedRaw) : null;
+  if(!state || !code || !stored || stored.state !== state) return new Response("Stato OAuth non valido",{status:400});
+  await env.SOCIALHUB_DATA.delete("oauth:twitch:state");
+  const tokenResp = await twitchTokenRequest(env, {code, grant_type:"authorization_code", redirect_uri:`${url.origin}/api/accounts/callback/twitch`});
+  const token = tokenResp.data;
+  if(!tokenResp.ok || !token?.access_token) return new Response(`Errore Twitch OAuth: ${token?.message||"token non ottenuto"}`,{status:502});
+  const sync = await fetchTwitchAccountData(env, token.access_token);
+  if(!sync.ok) return new Response(`Account Twitch autorizzato ma dati non recuperati: ${sync.error}`,{status:502});
+  await storeTwitchToken(env, token);
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};
+  config.accounts.twitch=sync.account;
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return new Response(`<html><body style="font-family:system-ui;background:#0c0f15;color:#fff;padding:40px"><h2>Twitch collegato ✓</h2><p>Account: ${escapeHtml(sync.account.handle)}</p><p>Follower: ${escapeHtml(sync.account.followerValue)}</p><p>Abbonati: ${escapeHtml(sync.account.subscriberValue)}</p><p>Puoi chiudere questa finestra e tornare al backend.</p><script>setTimeout(()=>window.close(),1200)</script></body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}});
+}
+
+async function twitchTokenRequest(env, params){
+  const body = new URLSearchParams({client_id:env.TWITCH_CLIENT_ID,client_secret:env.TWITCH_CLIENT_SECRET,...params});
+  const resp=await fetch("https://id.twitch.tv/oauth2/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+  const data=await resp.json().catch(()=>({message:"Risposta non valida"}));
+  return {ok:resp.ok,data};
+}
+
+async function storeTwitchToken(env, token){
+  await env.SOCIALHUB_DATA.put("oauth:twitch:token",JSON.stringify({accessToken:token.access_token,refreshToken:token.refresh_token,expiresIn:token.expires_in,scope:token.scope,tokenType:token.token_type,updatedAt:Date.now()}));
+}
+
+async function getTwitchToken(env){
+  const raw=await env.SOCIALHUB_DATA.get("oauth:twitch:token");
+  if(!raw) return null;
+  try{return JSON.parse(raw)}catch{return null}
+}
+
+async function fetchTwitchAccountData(env, accessToken){
+  const headers={"Authorization":`Bearer ${accessToken}`,"Client-Id":env.TWITCH_CLIENT_ID};
+  const uResp=await fetch("https://api.twitch.tv/helix/users",{headers});
+  const uData=await uResp.json().catch(()=>({}));
+  if(uResp.status===401) return {ok:false,reauth:true,error:"Token Twitch non valido o scaduto."};
+  const user=uData.data?.[0];
+  if(!uResp.ok || !user) return {ok:false,error:"Profilo Twitch non recuperato."};
+
+  const fResp=await fetch(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${encodeURIComponent(user.id)}`,{headers});
+  const fData=await fResp.json().catch(()=>({}));
+  if(fResp.status===401) return {ok:false,reauth:true,error:"Token Twitch non valido o scaduto."};
+
+  const sResp=await fetch(`https://api.twitch.tv/helix/subscriptions?broadcaster_id=${encodeURIComponent(user.id)}`,{headers});
+  const sData=await sResp.json().catch(()=>({}));
+  if(sResp.status===401) return {ok:false,reauth:true,error:"Token Twitch non valido o scaduto."};
+  // Subscriptions may return 401/403 when scope/eligibility is insufficient; preserve follower data.
+  const subValue = sResp.ok ? String(sData.total ?? 0) : "—";
+  return {ok:true,account:{connected:true,handle:user.login||user.display_name||"",displayName:user.display_name||user.login||"",profileImage:user.profile_image_url||"",broadcasterId:user.id,followerLabel:"Follower",followerValue:String(fData.total??0),subscriberLabel:"Abbonati",subscriberValue:subValue,lastSync:Date.now()}};
+}
+
+async function refreshTwitchToken(env, current){
+  if(!current?.refreshToken) return null;
+  const result=await twitchTokenRequest(env,{grant_type:"refresh_token",refresh_token:current.refreshToken});
+  if(!result.ok || !result.data?.access_token) return null;
+  await storeTwitchToken(env,result.data);
+  return result.data.access_token;
+}
+
+async function syncTwitchAccount(env){
+  if(!env.SOCIALHUB_DATA || !env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) return json({ok:false,error:"Configurazione Twitch/KV incompleta."},503);
+  let token=await getTwitchToken(env);
+  if(!token?.accessToken) return json({ok:false,error:"Twitch non è collegato.",reauth:true},409);
+  let result=await fetchTwitchAccountData(env,token.accessToken);
+  if(!result.ok && result.reauth){
+    const refreshed=await refreshTwitchToken(env,token);
+    if(!refreshed) return json({ok:false,error:"Sessione Twitch scaduta. Ricollega Twitch.",reauth:true},401);
+    result=await fetchTwitchAccountData(env,refreshed);
+  }
+  if(!result.ok) return json({ok:false,error:result.error||"Impossibile aggiornare Twitch."},502);
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};config.accounts.twitch=result.account;
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,account:result.account,config});
+}
+
+async function disconnectTwitchAccount(env){
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV non collegato."},503);
+  const token=await getTwitchToken(env);
+  if(token?.accessToken && env.TWITCH_CLIENT_ID){
+    try{await fetch(`https://id.twitch.tv/oauth2/revoke?client_id=${encodeURIComponent(env.TWITCH_CLIENT_ID)}&token=${encodeURIComponent(token.accessToken)}`,{method:"POST"})}catch{}
+  }
+  await env.SOCIALHUB_DATA.delete("oauth:twitch:token");
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};config.accounts.twitch={connected:false};
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,config});
+}
+
+async function googleTokenRequest(env, params){
+  const body = new URLSearchParams({client_id:env.GOOGLE_CLIENT_ID,client_secret:env.GOOGLE_CLIENT_SECRET,...params});
+  const resp = await fetch("https://oauth2.googleapis.com/token", {method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+  const data = await resp.json().catch(()=>({error_description:"Risposta non valida"}));
+  return {ok:resp.ok,data};
+}
+
+async function googleApi(url, accessToken, options={}){
+  const headers = new Headers(options.headers||{});
+  headers.set("Authorization", `Bearer ${accessToken}`);
+  return fetch(url, {...options,headers});
+}
+
+async function getYouTubeToken(env, slot){
+  const raw=await env.SOCIALHUB_DATA.get(`oauth:youtube:token:${slot}`);
+  if(!raw) return null;
+  try{return JSON.parse(raw)}catch{return null}
+}
+
+async function storeYouTubeToken(env, slot, token){
+  await env.SOCIALHUB_DATA.put(`oauth:youtube:token:${slot}`, JSON.stringify({
+    accessToken:token.access_token,
+    refreshToken:token.refresh_token || "",
+    expiresIn:token.expires_in || 0,
+    scope:token.scope || "",
+    tokenType:token.token_type || "Bearer",
+    updatedAt:Date.now()
+  }));
+}
+
+async function refreshYouTubeToken(env, slot, current){
+  if(!current?.refreshToken) return null;
+  const result=await googleTokenRequest(env,{grant_type:"refresh_token",refresh_token:current.refreshToken});
+  if(!result.ok || !result.data?.access_token) return null;
+  await storeYouTubeToken(env,slot,{...result.data,refresh_token:current.refreshToken});
+  return result.data.access_token;
+}
+
+async function finishYouTubeConnection(request, env, url){
+  if(!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return new Response("Credenziali Google non configurate",{status:503});
+  if(!env.SOCIALHUB_DATA) return new Response("KV SOCIALHUB_DATA non collegato",{status:503});
+  const state=url.searchParams.get("state");
+  const code=url.searchParams.get("code");
+  const cookieState=getCookie(request,"socialhub_yt_state");
+  if(!state || !code) return new Response("Autorizzazione Google incompleta",{status:400});
+  if(!cookieState || cookieState!==state) return new Response("Stato OAuth Google non valido: cookie mancante o non corrispondente",{status:400});
+  const stored=await verifyYouTubeState(env,state);
+  if(!stored) return new Response("Stato OAuth Google scaduto o non valido",{status:400});
+  const tokenResp=await googleTokenRequest(env,{code,grant_type:"authorization_code",redirect_uri:`${url.origin}/api/accounts/callback/youtube`});
+  const token=tokenResp.data;
+  if(!tokenResp.ok || !token?.access_token) return new Response(`Errore Google OAuth: ${escapeHtml(token?.error_description||token?.error||"token non ottenuto")}`,{status:502});
+  await storeYouTubeToken(env,stored.slot,token);
+  const channels=await fetchYouTubeChannels(env,token.access_token);
+  if(!channels.ok) return new Response(`Autorizzazione riuscita, ma i canali YouTube non sono stati recuperati: ${escapeHtml(channels.error)}`,{status:502});
+  if(channels.items.length===0) return new Response("Nessun canale YouTube disponibile per questo account Google.",{status:404});
+  const configRaw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  const config=configRaw?JSON.parse(configRaw):structuredClone(DEFAULT_CONFIG);
+  const otherSlot=stored.slot==='youtube1'?'youtube2':'youtube1';
+  const usedChannelId=config.accounts?.[otherSlot]?.channelId || "";
+  const available=channels.items.filter(ch=>ch.id!==usedChannelId);
+  if(channels.items.length===1){
+    if(channels.items[0].id===usedChannelId){
+      return withClearedYouTubeCookie(new Response(`Il canale YouTube disponibile è già associato a ${escapeHtml(otherSlot==='youtube1'?'YouTube 1':'YouTube 2')}. Questo account Google non presenta un secondo canale utilizzabile.`,{status:409}));
+    }
+    await saveSelectedYouTubeChannel(env,stored.slot,channels.items[0]);
+    return withClearedYouTubeCookie(youtubeDonePage(stored.slot,channels.items[0]));
+  }
+  if(available.length===0){
+    return withClearedYouTubeCookie(new Response(`Tutti i canali YouTube restituiti da Google sono già associati agli slot YouTube 1/YouTube 2.`,{status:409}));
+  }
+  const options=channels.items.map(ch=>{
+    const used=ch.id===usedChannelId;
+    if(used){
+      return `<div style="display:block;padding:14px 16px;margin:8px 0;background:#121722;border:1px solid #333b4c;border-radius:12px;color:#7f8999;opacity:.72"><strong>${escapeHtml(ch.title)}</strong><div style="font-size:12px;margin-top:4px">${escapeHtml(ch.subscriberValue)} iscritti · già associato a ${escapeHtml(otherSlot==='youtube1'?'YouTube 1':'YouTube 2')}</div></div>`;
+    }
+    return `<a href="${escapeAttr(`${url.origin}/api/accounts/youtube/select?slot=${encodeURIComponent(stored.slot)}&channelId=${encodeURIComponent(ch.id)}`)}" style="display:block;padding:14px 16px;margin:8px 0;background:#151a24;border:1px solid #30384a;border-radius:12px;color:#fff;text-decoration:none"><strong>${escapeHtml(ch.title)}</strong><div style="color:#8e98a8;font-size:12px;margin-top:4px">${escapeHtml(ch.subscriberValue)} iscritti · associa a ${escapeHtml(stored.slot==='youtube1'?'YouTube 1':'YouTube 2')}</div></a>`;
+  }).join('');
+  return withClearedYouTubeCookie(new Response(`<html><body style="font-family:system-ui;background:#0b0e14;color:#fff;padding:40px;max-width:720px;margin:auto"><h2>Seleziona il canale per ${escapeHtml(stored.slot==='youtube1'?'YouTube 1':'YouTube 2')}</h2><p style="color:#9aa4b2">Google ha restituito più canali. Scegli il canale da associare a questa scheda. Quello già utilizzato nell'altro slot viene mostrato come occupato.</p>${options}</body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}}));
+}
+
+async function fetchYouTubeChannels(env, accessToken){
+  const resp=await googleApi("https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true",accessToken);
+  const data=await resp.json().catch(()=>({}));
+  if(!resp.ok) return {ok:false,error:data?.error?.message||"Errore YouTube channels.list"};
+  const items=(data.items||[]).map(ch=>({id:ch.id,title:ch.snippet?.title||"Canale YouTube",handle:ch.snippet?.customUrl||"",profileImage:ch.snippet?.thumbnails?.default?.url||ch.snippet?.thumbnails?.medium?.url||"",subscriberValue:String(ch.statistics?.subscriberCount??"—") ,viewCount:String(ch.statistics?.viewCount??"—")}));
+  return {ok:true,items};
+}
+
+async function selectYouTubeChannel(request, env, url){
+  const slot=url.searchParams.get("slot");
+  const channelId=url.searchParams.get("channelId");
+  if(!["youtube1","youtube2"].includes(slot) || !channelId) return new Response("Parametri non validi",{status:400});
+  const token=await getYouTubeToken(env,slot);
+  if(!token?.accessToken) return new Response("Autorizzazione YouTube non trovata",{status:409});
+  const channel=await fetchYouTubeChannelById(env,token.accessToken,channelId);
+  if(!channel.ok) return new Response(`Canale non recuperato: ${escapeHtml(channel.error)}`,{status:502});
+  await saveSelectedYouTubeChannel(env,slot,channel.account);
+  return youtubeDonePage(slot,channel.account);
+}
+
+async function fetchYouTubeChannelById(env,accessToken,channelId){
+  const resp=await googleApi(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${encodeURIComponent(channelId)}`,accessToken);
+  const data=await resp.json().catch(()=>({}));
+  if(!resp.ok || !data.items?.[0]) return {ok:false,error:data?.error?.message||"Canale YouTube non trovato"};
+  const ch=data.items[0];
+  return {ok:true,account:{id:ch.id,title:ch.snippet?.title||"Canale YouTube",handle:ch.snippet?.customUrl||"",profileImage:ch.snippet?.thumbnails?.medium?.url||ch.snippet?.thumbnails?.default?.url||"",followerLabel:"Iscritti",followerValue:String(ch.statistics?.subscriberCount??"—"),viewCount:String(ch.statistics?.viewCount??"—")}};
+}
+
+async function saveSelectedYouTubeChannel(env,slot,account){
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};
+  config.accounts[slot]={connected:true,handle:account.handle||account.title,displayName:account.title,channelId:account.id,profileImage:account.profileImage||"",followerLabel:"Iscritti",followerValue:String(account.followerValue??"—"),subscriberLabel:"Membri",subscriberValue:"—",lastSync:Date.now(),viewCount:String(account.viewCount??"")};
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return config;
+}
+
+function withClearedYouTubeCookie(response){response.headers.set("Set-Cookie",clearCookieHeader());return response;}
+
+function youtubeDonePage(slot,account){
+  return new Response(`<html><body style="font-family:system-ui;background:#0b0e14;color:#fff;padding:40px"><h2>${escapeHtml(slot==='youtube1'?'YouTube 1':'YouTube 2')} collegato ✓</h2><p>Canale: ${escapeHtml(account.title||account.handle||"")}</p><p>Iscritti: ${escapeHtml(account.followerValue||"—")}</p><p>Puoi chiudere questa finestra e tornare al backend.</p><script>setTimeout(()=>window.close(),1200)</script></body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}});
+}
+
+async function syncYouTubeAccount(env,slot){
+  if(!env.SOCIALHUB_DATA || !env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return json({ok:false,error:"Configurazione Google/KV incompleta."},503);
+  if(!["youtube1","youtube2"].includes(slot)) return json({ok:false,error:"Slot YouTube non valido."},400);
+  let token=await getYouTubeToken(env,slot);
+  if(!token?.accessToken) return json({ok:false,error:"YouTube non è collegato.",reauth:true},409);
+  const current=await env.SOCIALHUB_DATA.get(CONFIG_KEY);let config=current?JSON.parse(current):structuredClone(DEFAULT_CONFIG);const channelId=config.accounts?.[slot]?.channelId;
+  if(!channelId) return json({ok:false,error:"Canale YouTube non associato.",reauth:true},409);
+  let result=await fetchYouTubeChannelById(env,token.accessToken,channelId);
+  if(!result.ok){
+    const refreshed=await refreshYouTubeToken(env,slot,token);
+    if(!refreshed) return json({ok:false,error:"Sessione Google scaduta. Ricollega YouTube.",reauth:true},401);
+    result=await fetchYouTubeChannelById(env,refreshed,channelId);
+  }
+  if(!result.ok) return json({ok:false,error:result.error||"Impossibile aggiornare YouTube."},502);
+  const account={...config.accounts[slot],...result.account,lastSync:Date.now()};
+  // Try current paid channel members count when the API is enabled for the creator; otherwise retain an honest unavailable state.
+  let memberValue="—";
+  const tokenNow=await getYouTubeToken(env,slot);
+  if(tokenNow?.accessToken){
+    try{
+      const m=await googleApi("https://www.googleapis.com/youtube/v3/members?part=snippet&maxResults=1",tokenNow.accessToken);
+      if(m.ok){const md=await m.json().catch(()=>({}));memberValue=String(md.pageInfo?.totalResults??"—");}
+    }catch{}
+  }
+  account.subscriberLabel="Membri";account.subscriberValue=memberValue;
+  config.accounts[slot]=account;await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,account,config});
+}
+
+async function disconnectYouTubeAccount(env,slot){
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV non collegato."},503);
+  const token=await getYouTubeToken(env,slot);
+  if(token?.accessToken){try{await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token.accessToken)}`,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"}})}catch{}}
+  await env.SOCIALHUB_DATA.delete(`oauth:youtube:token:${slot}`);
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);config.accounts=config.accounts||{};config.accounts[slot]={connected:false};await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,config});
+}
+
+function escapeAttr(v){return String(v??'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
+
+function escapeHtml(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;')}
+
+async function preparePublication(request, env){
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+  const body = await request.json();
+  const text = String(body?.text || "").trim().slice(0,10000);
+  const targets = Array.isArray(body?.targets) ? body.targets.filter(x=>["instagram","youtube1","youtube2","twitch","kick","tiktok","x"].includes(x)) : [];
+  const raw = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  let config = raw ? JSON.parse(raw) : structuredClone(DEFAULT_CONFIG);
+  config.composer = {...DEFAULT_CONFIG.composer,...(config.composer||{}),draft:text,targets,updatedAt:Date.now()};
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
+  const blocked = targets.filter(x=>x === "x");
+  const pending = targets.filter(x=>x !== "x" && !config.accounts?.[x]?.connected);
+  if(blocked.length) return json({ok:false,error:"X non disponibile nel flusso gratuito: la sua API è pay-per-use.",config},402);
+  if(pending.length) return json({ok:false,error:`Account da collegare: ${pending.join(", ")}`,config},409);
+  return json({ok:true,sent:false,status:'prepared',message:"Selezione validata e bozza salvata. NESSUN SOCIAL HA RICEVUTO IL POST: l'invio reale non è ancora attivo.",config});
+}
+
+async function getConfig(env) {
+  if (!env.SOCIALHUB_DATA) return json({ ok:false, storage:false, error:"KV SOCIALHUB_DATA non collegato al Worker." }, 503);
+  const raw = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  if (!raw) return json({ ok:true, storage:true, config:structuredClone(DEFAULT_CONFIG) });
+  try {
+    const parsed = JSON.parse(raw);
+    return json({ ok:true, storage:true, config:{
+      ...structuredClone(DEFAULT_CONFIG),
+      ...parsed,
+      page:{...DEFAULT_CONFIG.page, ...(parsed.page || {})},
+      socials:parsed.socials || {},
+      accounts:parsed.accounts || {},
+      composer:{...DEFAULT_CONFIG.composer, ...(parsed.composer || {})}
+    }});
+  } catch {
+    return json({ ok:true, storage:true, config:structuredClone(DEFAULT_CONFIG), warning:"Configurazione precedente non valida: ripristinati i valori sicuri." });
+  }
+}
+
+async function saveConfig(request, env) {
+  if (!env.SOCIALHUB_DATA) return json({ ok:false, storage:false, error:"KV SOCIALHUB_DATA non collegato al Worker." }, 503);
+  const body = await request.json();
+  const config = {
+    page:{
+      title:String(body?.page?.title || "TheSyncFM").slice(0,120),
+      bio:String(body?.page?.bio || "Seguici su tutti i nostri canali.").slice(0,500)
+    },
+    socials:sanitizeSocials(body?.socials),
+    accounts:sanitizeAccounts(body?.accounts),
+    composer:{draft:String(body?.composer?.draft || "").slice(0,10000),updatedAt:Number(body?.composer?.updatedAt || 0)},
+    updatedAt:Date.now()
+  };
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
+  const verify = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  if (!verify) return json({ ok:false, error:"Salvataggio non verificato." }, 500);
+  return json({ ok:true, storage:true, config });
+}
+
+function sanitizeSocials(input) {
+  const allowed=["instagram","youtube1","youtube2","twitch","kick","tiktok","x"];
+  const out={};
+  for (const id of allowed) {
+    const row=input?.[id] || {};
+    out[id]={href:String(row.href || "").slice(0,1000),description:String(row.description || "").slice(0,180)};
+  }
+  return out;
+}
+function sanitizeAccounts(input) {
+  const allowed=["instagram","youtube1","youtube2","twitch","kick","tiktok","x"];
+  const out={};
+  for (const id of allowed) {
+    const row=input?.[id] || {};
+    out[id]={connected:Boolean(row.connected),handle:String(row.handle || "").slice(0,120),followerLabel:String(row.followerLabel || "").slice(0,80),followerValue:String(row.followerValue || "").slice(0,50),subscriberLabel:String(row.subscriberLabel || "").slice(0,80),subscriberValue:String(row.subscriberValue || "").slice(0,50),lastSync:Number(row.lastSync || 0)};
+  }
+  return out;
+}
+
+async function saveMedia(request, env, key) {
+  const mime=(request.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+  if (!ALLOWED_MIME.has(mime)) return json({ok:false,error:"Formato non supportato. Usa PNG, JPG o WebP."},400);
+  const len=Number(request.headers.get("content-length") || 0);
+  if (len && len > MAX_IMAGE_BYTES) return json({ok:false,error:"Immagine troppo grande. Massimo 6 MB."},413);
+  const body=await request.arrayBuffer();
+  if (!body.byteLength) return json({ok:false,error:"File vuoto."},400);
+  if (body.byteLength > MAX_IMAGE_BYTES) return json({ok:false,error:"Immagine troppo grande. Massimo 6 MB."},413);
+
+  const version=Date.now();
+  await env.SOCIALHUB_DATA.put(MEDIA_PREFIX + key, body, {
+    metadata:{contentType:mime,updatedAt:version,size:body.byteLength}
+  });
+
+  const check=await env.SOCIALHUB_DATA.get(MEDIA_PREFIX + key, "arrayBuffer");
+  if (!check || check.byteLength !== body.byteLength) return json({ok:false,error:"Upload scritto ma non verificato."},500);
+  return json({ok:true,key,updatedAt:version,url:`/api/media/${encodeURIComponent(key)}?v=${version}`});
+}
+
+async function getMedia(env,key) {
+  const result=await env.SOCIALHUB_DATA.getWithMetadata(MEDIA_PREFIX + key, "arrayBuffer");
+  if (!result?.value) return new Response("Not found",{status:404,headers:{"Cache-Control":"no-store"}});
+  const headers=new Headers();
+  headers.set("Content-Type",result.metadata?.contentType || "application/octet-stream");
+  headers.set("Cache-Control","public, max-age=31536000, immutable");
+  headers.set("X-Content-Type-Options","nosniff");
+  return new Response(result.value,{status:200,headers});
+}
+
+async function deleteMedia(env,key) {
+  await env.SOCIALHUB_DATA.delete(MEDIA_PREFIX + key);
+  return json({ok:true,key,updatedAt:Date.now()});
+}
+
+function json(data,status=200){
+  return new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}});
+}
