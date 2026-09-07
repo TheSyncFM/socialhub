@@ -62,7 +62,12 @@ async function isAdminAuthenticated(request,env){
     return await crypto.subtle.verify("HMAC",key,bytesFromBase64url(parts[1]),new TextEncoder().encode(payload));
   }catch{return false}
 }
-function clearAdminCookie(){ return `${ADMIN_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`; }
+function clearAdminCookie(){
+  return [
+    `${ADMIN_COOKIE}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax`,
+    `${ADMIN_COOKIE}=; Path=/backend; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax`
+  ];
+}
 function setAdminCookie(token){ return `${ADMIN_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${ADMIN_MAX_AGE}; HttpOnly; Secure; SameSite=Lax`; }
 
 export default {
@@ -78,13 +83,14 @@ export default {
         return new Response(JSON.stringify({ok:true}),{status:200,headers:{"content-type":"application/json; charset=utf-8","set-cookie":setAdminCookie(token)}});
       }
       if (url.pathname === "/api/admin/logout" && (request.method === "POST" || request.method === "GET")) {
-        const headers = {
-          "content-type": "application/json; charset=utf-8",
-          "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
-          "set-cookie": clearAdminCookie()
-        };
+        const headers = new Headers();
+        headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
+        headers.set("pragma", "no-cache");
+        headers.set("content-type", "text/html; charset=utf-8");
+        for (const cookie of clearAdminCookie()) headers.append("set-cookie", cookie);
         if (request.method === "GET") {
-          return new Response(null,{status:302,headers:{"location":"/backend","cache-control":headers["cache-control"],"set-cookie":headers["set-cookie"]}});
+          headers.set("location", `/admin-login.html?logged_out=${Date.now()}`);
+          return new Response('<!doctype html><meta http-equiv="refresh" content="0;url=/admin-login.html"><a href="/admin-login.html">Continua</a>', {status:303, headers});
         }
         return new Response(JSON.stringify({ok:true}),{status:200,headers});
       }
