@@ -83,21 +83,24 @@ export default {
         return new Response(JSON.stringify({ok:true}),{status:200,headers:{"content-type":"application/json; charset=utf-8","set-cookie":setAdminCookie(token)}});
       }
       if (url.pathname === "/api/admin/logout" && (request.method === "POST" || request.method === "GET")) {
-        const headers = new Headers();
-        headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
-        headers.set("pragma", "no-cache");
-        headers.set("content-type", "text/html; charset=utf-8");
-        for (const cookie of clearAdminCookie()) headers.append("set-cookie", cookie);
-        if (request.method === "GET") {
-          headers.set("location", `/admin-login.html?logged_out=${Date.now()}`);
-          return new Response('<!doctype html><meta http-equiv="refresh" content="0;url=/admin-login.html"><a href="/admin-login.html">Continua</a>', {status:303, headers});
-        }
-        return new Response(JSON.stringify({ok:true}),{status:200,headers});
+        return logoutResponse(env, url.origin);
+      }
+      if (url.pathname === "/admin-logout" && request.method === "GET") {
+        return logoutResponse(env, url.origin);
       }
       if (url.pathname === "/backend" || url.pathname === "/backend/" || url.pathname === "/backend.html") {
+        if (url.searchParams.has("logout")) {
+          return logoutResponse(env, url.origin);
+        }
         const ok=await isAdminAuthenticated(request,env);
         const target=ok ? "/backend.html" : "/admin-login.html";
-        return env.ASSETS.fetch(new Request(new URL(target, url.origin), request));
+        const response = await env.ASSETS.fetch(new Request(new URL(target, url.origin), request));
+        const headers = new Headers(response.headers);
+        headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
+        headers.set("pragma", "no-cache");
+        headers.set("expires", "0");
+        headers.set("vary", "Cookie");
+        return new Response(response.body, {status: response.status, statusText: response.statusText, headers});
       }
 
       // Public read-only endpoints remain available to the public page.
@@ -151,6 +154,17 @@ export default {
     }
   }
 };
+
+async function logoutResponse(env, origin){
+  const headers = new Headers();
+  headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
+  headers.set("pragma", "no-cache");
+  headers.set("expires", "0");
+  headers.set("location", `${origin}/admin-login.html?logged_out=${Date.now()}`);
+  for (const cookie of clearAdminCookie()) headers.append("set-cookie", cookie);
+  return new Response(null, { status: 303, headers });
+}
+
 
 
 async function diagnosticConfig(env){
