@@ -2,29 +2,48 @@
 <html lang="it">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SocialHub — Accesso Admin</title>
+<title>SocialHub — Login</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 0%,rgba(139,92,246,.16),transparent 38%),#090c11;color:#eef2f7;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.login-wrap{width:min(430px,calc(100vw - 32px))}.brand{display:flex;align-items:center;gap:10px;margin-bottom:18px}.dot{width:10px;height:10px;border-radius:50%;background:#8b5cf6;box-shadow:0 0 18px rgba(139,92,246,.65)}.brand strong{font-size:15px}.eyebrow{font-size:10px;letter-spacing:2px;color:#8b5cf6;font-weight:800;margin-bottom:8px}.card{padding:28px;border:1px solid #293140;border-radius:18px;background:linear-gradient(180deg,#151a22,#10141b);box-shadow:0 20px 60px rgba(0,0,0,.38)}h1{margin:0 0 8px;font-size:28px;letter-spacing:-.03em}p{margin:0 0 22px;color:#8f99a8;font-size:13px;line-height:1.5}.field{display:block;margin-bottom:14px}.field span{display:block;font-size:11px;color:#a7b0bd;margin-bottom:7px}.field input{width:100%;padding:12px 13px;border-radius:10px;border:1px solid #303746;background:#0c1016;color:#fff;outline:none;font:inherit}.field input:focus{border-color:#7652df;box-shadow:0 0 0 3px rgba(139,92,246,.12)}button{width:100%;padding:12px 14px;border:0;border-radius:10px;background:#8b5cf6;color:#fff;font-weight:800;cursor:pointer}button:hover{filter:brightness(1.05)}.status{min-height:20px;margin-top:12px;font-size:11px;color:#8f99a8}.status.error{color:#ff9eaa}.foot{margin-top:14px;text-align:center;font-size:10px;color:#626d7d}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 0%,rgba(139,92,246,.16),transparent 38%),#090c11;color:#eef2f7;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.login-wrap{width:min(430px,calc(100vw - 32px))}.brand{display:flex;align-items:center;gap:10px;margin-bottom:18px}.dot{width:10px;height:10px;border-radius:50%;background:#8b5cf6;box-shadow:0 0 18px rgba(139,92,246,.65)}.brand strong{font-size:15px}.eyebrow{font-size:10px;letter-spacing:2px;color:#8b5cf6;font-weight:800;margin-bottom:8px}.card{padding:28px;border:1px solid #293140;border-radius:18px;background:linear-gradient(180deg,#151a22,#10141b);box-shadow:0 20px 60px rgba(0,0,0,.38)}h1{margin:0 0 8px;font-size:28px;letter-spacing:-.03em}p{margin:0 0 22px;color:#8f99a8;font-size:13px;line-height:1.5}.field{display:block;margin-bottom:14px}.field span{display:block;font-size:11px;color:#a7b0bd;margin-bottom:7px}.field input{width:100%;padding:12px 13px;border-radius:10px;border:1px solid #303746;background:#0c1016;color:#fff;outline:none;font:inherit}.field input:focus{border-color:#7652df;box-shadow:0 0 0 3px rgba(139,92,246,.12)}button{width:100%;padding:12px 14px;border:0;border-radius:10px;background:#8b5cf6;color:#fff;font-weight:800;cursor:pointer}button:hover{filter:brightness(1.05)}.status{min-height:20px;margin-top:12px;font-size:11px;color:#8f99a8}.status.ok{color:#78d6a1}.status.error{color:#ff9eaa}.foot{margin-top:14px;text-align:center;font-size:10px;color:#626d7d}
 </style>
 </head>
 <body>
 <main class="login-wrap">
   <div class="brand"><span class="dot"></span><strong>SocialHub · TheSyncFM</strong></div>
-  <div class="card">
+  <section class="card">
     <div class="eyebrow">PRIVATE BACKEND</div>
-    <h1>Accesso amministratore</h1>
-    <p>Inserisci la password amministratore per accedere al Control Center.</p>
-    <form id="loginForm">
-      <label class="field"><span>Password</span><input id="password" type="password" autocomplete="current-password" required autofocus></label>
-      <button type="submit">Accedi al backend</button>
+    <h1>Login</h1>
+    <p>Inserisci username e password per accedere al Control Center.</p>
+    <form id="loginForm" autocomplete="on">
+      <label class="field"><span>Username</span><input id="username" name="username" type="text" autocomplete="username" required></label>
+      <label class="field"><span>Password</span><input id="password" name="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit" id="loginBtn">Accedi</button>
       <div id="status" class="status" aria-live="polite"></div>
     </form>
-  </div>
-  <div class="foot">Accesso riservato · Sessione protetta</div>
+  </section>
+  <div class="foot">Accesso riservato all'amministratore.</div>
 </main>
 <script>
-const form=document.getElementById('loginForm'),pass=document.getElementById('password'),status=document.getElementById('status');
-form.addEventListener('submit',async e=>{e.preventDefault();status.className='status';status.textContent='Verifica in corso…';try{const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pass.value})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.error||'Password non valida');window.location.href='/backend';}catch(err){status.className='status error';status.textContent=err.message||'Accesso non riuscito';pass.value='';pass.focus();}});
+const form=document.getElementById('loginForm');
+const username=document.getElementById('username');
+const password=document.getElementById('password');
+const status=document.getElementById('status');
+const button=document.getElementById('loginBtn');
+form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  status.className='status'; status.textContent='Verifica in corso…'; button.disabled=true;
+  try{
+    const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.value.trim(),password:password.value}),cache:'no-store'});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.ok) throw new Error(d.error||'Username o password non corretti.');
+    try{sessionStorage.setItem('socialhub_admin_tab','1')}catch(e){}
+    status.className='status ok'; status.textContent='Login corretto ✓';
+    setTimeout(()=>location.replace('/backend'),180);
+  }catch(err){
+    status.className='status error'; status.textContent=err.message||'Accesso non riuscito.';
+    password.value=''; password.focus();
+  }finally{button.disabled=false}
+});
 </script>
 </body>
 </html>
