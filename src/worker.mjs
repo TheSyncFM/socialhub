@@ -4,7 +4,7 @@ const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
 const ALLOWED_KEYS = new Set([
   "profile-avatar","profile-cover",
   "banner-instagram","banner-youtube1","banner-youtube2",
-  "banner-twitch","banner-kick","banner-tiktok","banner-x"
+  "banner-twitch","banner-kick","banner-tiktok","banner-x","banner-discord"
 ]);
 const ALLOWED_MIME = new Set(["image/png","image/jpeg","image/webp"]);
 
