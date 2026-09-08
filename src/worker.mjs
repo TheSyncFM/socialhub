@@ -187,7 +187,10 @@ async function diagnosticConfig(env){
       googleClientId:Boolean(env.GOOGLE_CLIENT_ID),
       googleClientSecret:Boolean(env.GOOGLE_CLIENT_SECRET),
       kv:Boolean(env.SOCIALHUB_DATA),
-      assets:Boolean(env.ASSETS)
+      assets:Boolean(env.ASSETS),
+      instagramAccessToken:Boolean(env.INSTAGRAM_ACCESS_TOKEN),
+      instagramApiMode:instagramApiMode(env),
+      instagramUserId:Boolean(env.INSTAGRAM_USER_ID)
     },
     timestamp:Date.now()
   });
@@ -247,95 +250,111 @@ function getCookie(request,name){
 }
 function clearCookieHeader(){return "socialhub_yt_state=; Path=/api/accounts/callback/youtube; Max-Age=0; HttpOnly; Secure; SameSite=Lax"}
 
-async function instagramApi(path, token){
-  const base = "https://graph.instagram.com/v25.0";
+function instagramApiMode(env){
+  const mode=String(env.INSTAGRAM_API_MODE||"instagram_login").trim().toLowerCase();
+  return mode==="facebook_login" ? "facebook_login" : "instagram_login";
+}
+
+async function instagramApi(path, token, env, hostOverride){
+  const host=hostOverride || (instagramApiMode(env)==="facebook_login" ? "https://graph.facebook.com" : "https://graph.instagram.com");
+  const base=`${host}/v25.0`;
   const u = new URL(base + path);
-  u.searchParams.set("access_token", token);
-  const resp = await fetch(u.toString(), { headers: { "Accept": "application/json" } });
+  const headers={"Accept":"application/json","Authorization":`Bearer ${token}`};
+  const resp = await fetch(u.toString(), { headers });
   const data = await resp.json().catch(() => ({}));
   return { ok: resp.ok, data, status: resp.status };
 }
 
+function instagramErrorMessage(result, mode){
+  const e=result?.data?.error||{};
+  const raw=e.message || `Instagram API errore ${result?.status||"sconosciuto"}`;
+  if(e.code===200 || /api access blocked/i.test(raw)){
+    if(mode==="facebook_login"){
+      return `API access blocked. Meta sta rifiutando il token/app usato per Facebook Login. Verifica che l'Instagram sia Professionale, collegato a una Pagina Facebook e che il token abbia instagram_basic/instagram_content_publish/pages_show_list/pages_read_engagement. Se il blocco riguarda l'app, va rimosso nel pannello Meta: non è un problema del frontend.`;
+    }
+    return `API access blocked. Meta sta rifiutando il token/app usato per Instagram Login. Verifica che l'account sia Professionale (Creator o Business), che l'app Meta abbia Instagram API with Instagram Login configurata, che il token sia valido e che abbia almeno instagram_business_basic. Se il blocco riguarda l'app, va rimosso nel pannello Meta: non è un problema del frontend.`;
+  }
+  return raw;
+}
+
+async function getInstagramProfile(env){
+  const token=String(env.INSTAGRAM_ACCESS_TOKEN||"").trim();
+  const mode=instagramApiMode(env);
+  if(!token) return {ok:false,status:503,error:"INSTAGRAM_ACCESS_TOKEN non configurato nel Worker."};
+
+  if(mode==="instagram_login"){
+    const profile=await instagramApi("/me?fields=user_id,username,name,profile_picture_url,followers_count,follows_count,account_type",token,env);
+    if(!profile.ok) return {ok:false,status:profile.status,error:instagramErrorMessage(profile,mode),raw:profile.data};
+    return {ok:true,mode,token,profile:profile.data};
+  }
+
+  // Facebook Login path: accept an explicit Instagram professional account ID,
+  // otherwise discover it from the Pages managed by the token owner.
+  let igId=String(env.INSTAGRAM_USER_ID||"").trim();
+  let pageToken=token;
+  if(!igId){
+    const pages=await instagramApi("/me/accounts?fields=id,name,access_token,instagram_business_account",token,env,"https://graph.facebook.com");
+    if(!pages.ok) return {ok:false,status:pages.status,error:instagramErrorMessage(pages,mode),raw:pages.data};
+    const page=Array.isArray(pages.data?.data) ? pages.data.data.find(x=>x?.instagram_business_account?.id) : null;
+    igId=page?.instagram_business_account?.id || "";
+    pageToken=page?.access_token || token;
+    if(!igId) return {ok:false,status:502,error:"Facebook Login: nessun account Instagram Professionale collegato a una Pagina Facebook è stato trovato."};
+  }
+  const profile=await instagramApi(`/${encodeURIComponent(igId)}?fields=id,username,name,profile_picture_url,followers_count,follows_count,account_type`,pageToken,env,"https://graph.facebook.com");
+  if(!profile.ok) return {ok:false,status:profile.status,error:instagramErrorMessage(profile,mode),raw:profile.data};
+  return {ok:true,mode,token:pageToken,profile:profile.data};
+}
+
 async function syncInstagramAccount(env){
-  if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"INSTAGRAM_ACCESS_TOKEN non configurato nel Worker."},503);
+  if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"Instagram: configura INSTAGRAM_ACCESS_TOKEN nel Worker."},503);
   if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
 
-  const profile = await instagramApi("/me?fields=id,user_id,username,name,profile_picture_url,followers_count,follows_count,account_type", env.INSTAGRAM_ACCESS_TOKEN);
-  if(!profile.ok){
-    const msg = profile.data?.error?.message || `Instagram API errore ${profile.status}`;
-    return json({ok:false,error:`Instagram: ${msg}`},502);
-  }
+  const result=await getInstagramProfile(env);
+  if(!result.ok) return json({ok:false,error:`Instagram: ${result.error}`},result.status===401?401:result.status===403?403:502);
 
-  const instagramId = profile.data?.user_id || profile.data?.id || "";
+  const profile=result.profile||{};
+  const instagramId=profile.user_id || profile.id || "";
   if(!instagramId) return json({ok:false,error:"Instagram: l'API non ha restituito l'ID dell'account."},502);
 
-  let followerValue = "—";
-  let followerSource = "";
-  let insightsMessage = "";
-
-  // The account profile field is the authoritative total follower count.
-  // Keep this value separate from any "follows" metric (accounts followed).
-  const profileFollowers = profile.data?.followers_count;
-  if(profileFollowers !== undefined && profileFollowers !== null && profileFollowers !== "") {
-    const n = Number(profileFollowers);
-    if(Number.isFinite(n) && n >= 0) {
-      followerValue = String(n);
-      followerSource = "profile.followers_count";
+  let followerValue="—";
+  let followerSource="";
+  const profileFollowers=profile.followers_count;
+  if(profileFollowers!==undefined && profileFollowers!==null && profileFollowers!==""){
+    const n=Number(profileFollowers);
+    if(Number.isFinite(n) && n>=0){
+      followerValue=String(n);
+      followerSource="profile.followers_count";
     }
   }
 
-  // Fallback only when followers_count was not returned by the profile endpoint.
-  if(followerValue === "—") {
-    const insights = await instagramApi(`/${encodeURIComponent(instagramId)}/insights?metric=follower_count&period=day`, env.INSTAGRAM_ACCESS_TOKEN);
-    if(insights.ok && Array.isArray(insights.data?.data)) {
-      const metric = insights.data.data.find(x => x.name === "follower_count");
-      const values = Array.isArray(metric?.values) ? metric.values : [];
-      if(values.length) {
-        const candidate = values[values.length - 1]?.value;
-        const n = Number(candidate);
-        if(Number.isFinite(n) && n >= 0) {
-          followerValue = String(n);
-          followerSource = "insights.follower_count";
-        }
-      }
-    }
-    if(followerValue === "—") insightsMessage = insights.data?.error?.message || `Follower non disponibili (${insights.status})`;
-  }
-
-  const raw = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
-  const config = raw ? JSON.parse(raw) : structuredClone(DEFAULT_CONFIG);
-  config.accounts = config.accounts || {};
-  const previous = config.accounts.instagram || {};
-  const username = profile.data?.username || previous.username || "";
-  const handle = username ? `@${username}` : (previous.handle || "");
-  const displayName = profile.data?.name || (username ? `@${username}` : "Instagram");
-  const followingValue = profile.data?.follows_count;
-  config.accounts.instagram = {
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  const config=raw ? JSON.parse(raw) : structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};
+  const previous=config.accounts.instagram||{};
+  const username=profile.username||previous.username||"";
+  const handle=username ? `@${username}` : (previous.handle||"");
+  const displayName=profile.name || (username ? `@${username}` : "Instagram");
+  const followingValue=profile.follows_count;
+  config.accounts.instagram={
     ...previous,
-    connected: true,
-    accountType: profile.data?.account_type || "professional",
+    connected:true,
+    accountType:profile.account_type||"professional",
     username,
     handle,
     displayName,
-    profileUrl: username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : (previous.profileUrl || ""),
+    profileUrl:username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : (previous.profileUrl||""),
     instagramId,
-    profileImage: profile.data?.profile_picture_url || previous.profileImage || "",
-    followerLabel: "Follower",
+    profileImage:profile.profile_picture_url||previous.profileImage||"",
+    followerLabel:"Follower",
     followerValue,
-    followingValue: (followingValue !== undefined && followingValue !== null) ? String(followingValue) : (previous.followingValue || "—"),
+    followingValue:(followingValue!==undefined && followingValue!==null) ? String(followingValue) : (previous.followingValue||"—"),
     followerSource,
-    lastSync: Date.now(),
-    note: insightsMessage
-      ? `Account Creator/Professionale collegato. Follower da API profilo non disponibili: ${insightsMessage}`
-      : "Account Creator/Professionale collegato tramite Instagram API"
+    apiMode:result.mode,
+    lastSync:Date.now(),
+    note:"Account Instagram collegato tramite API Meta"
   };
-  await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
-  return json({
-    ok:true,
-    account:config.accounts.instagram,
-    config,
-    message:`Instagram collegato${followerValue !== "—" ? ` · ${followerValue} follower` : " · follower non disponibili"}.`
-  });
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,account:config.accounts.instagram,config,message:`Instagram collegato${followerValue!=="—" ? ` · ${followerValue} follower` : " · follower non disponibili"}.`});
 }
 
 async function disconnectInstagramAccount(env){
@@ -356,7 +375,7 @@ async function disconnectInstagramAccount(env){
 }
 
 const PLATFORM_SETUP = {
-  instagram: "Instagram: puoi usare un account personale con configurazione manuale oppure un account professionale per le integrazioni API.",
+  instagram: "Instagram: usa un account Professionale (Creator o Business) con Instagram API. Modalità predefinita: Instagram Login; in alternativa imposta INSTAGRAM_API_MODE=facebook_login.",
   youtube1: "YouTube 1: configura le credenziali OAuth Google (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET).",
   youtube2: "YouTube 2: usa la stessa autorizzazione Google; il backend permette di gestire due canali.",
   twitch: "Twitch: configura TWITCH_CLIENT_ID e TWITCH_CLIENT_SECRET (la tua app Twitch esistente può essere riutilizzata).",
