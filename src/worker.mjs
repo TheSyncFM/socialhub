@@ -273,21 +273,30 @@ async function syncInstagramAccount(env){
   let followerSource = "";
   let insightsMessage = "";
 
-  // Prefer the direct authenticated profile field so the follower total is read
-  // from Instagram itself and does not depend on the Insights metric.
+  // The account profile field is the authoritative total follower count.
+  // Keep this value separate from any "follows" metric (accounts followed).
   const profileFollowers = profile.data?.followers_count;
-  if(profileFollowers !== undefined && profileFollowers !== null && profileFollowers !== ""){
-    followerValue = String(profileFollowers);
-    followerSource = "profile";
-  } else {
-    // Fallback to Account Insights when the profile field is not returned.
+  if(profileFollowers !== undefined && profileFollowers !== null && profileFollowers !== "") {
+    const n = Number(profileFollowers);
+    if(Number.isFinite(n) && n >= 0) {
+      followerValue = String(n);
+      followerSource = "profile.followers_count";
+    }
+  }
+
+  // Fallback only when followers_count was not returned by the profile endpoint.
+  if(followerValue === "—") {
     const insights = await instagramApi(`/${encodeURIComponent(instagramId)}/insights?metric=follower_count&period=day`, env.INSTAGRAM_ACCESS_TOKEN);
-    if(insights.ok && Array.isArray(insights.data?.data)){
+    if(insights.ok && Array.isArray(insights.data?.data)) {
       const metric = insights.data.data.find(x => x.name === "follower_count");
       const values = Array.isArray(metric?.values) ? metric.values : [];
-      if(values.length){
-        followerValue = String(values[values.length - 1]?.value ?? "—");
-        followerSource = "insights";
+      if(values.length) {
+        const candidate = values[values.length - 1]?.value;
+        const n = Number(candidate);
+        if(Number.isFinite(n) && n >= 0) {
+          followerValue = String(n);
+          followerSource = "insights.follower_count";
+        }
       }
     }
     if(followerValue === "—") insightsMessage = insights.data?.error?.message || `Follower non disponibili (${insights.status})`;
