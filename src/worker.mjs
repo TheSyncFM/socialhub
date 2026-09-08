@@ -260,7 +260,7 @@ async function syncInstagramAccount(env){
   if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"INSTAGRAM_ACCESS_TOKEN non configurato nel Worker."},503);
   if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
 
-  const profile = await instagramApi("/me?fields=user_id,username,name,profile_picture_url,followers_count", env.INSTAGRAM_ACCESS_TOKEN);
+  const profile = await instagramApi("/me?fields=id,user_id,username,name,profile_picture_url,followers_count,follows_count,account_type", env.INSTAGRAM_ACCESS_TOKEN);
   if(!profile.ok){
     const msg = profile.data?.error?.message || `Instagram API errore ${profile.status}`;
     return json({ok:false,error:`Instagram: ${msg}`},502);
@@ -306,20 +306,27 @@ async function syncInstagramAccount(env){
   const config = raw ? JSON.parse(raw) : structuredClone(DEFAULT_CONFIG);
   config.accounts = config.accounts || {};
   const previous = config.accounts.instagram || {};
+  const username = profile.data?.username || previous.username || "";
+  const handle = username ? `@${username}` : (previous.handle || "");
+  const displayName = profile.data?.name || (username ? `@${username}` : "Instagram");
+  const followingValue = profile.data?.follows_count;
   config.accounts.instagram = {
     ...previous,
     connected: true,
-    accountType: "professional",
-    handle: profile.data?.username ? `@${profile.data.username}` : (previous.handle || ""),
-    displayName: profile.data?.name || profile.data?.username || "Instagram",
-    profileUrl: profile.data?.username ? `https://www.instagram.com/${encodeURIComponent(profile.data.username)}/` : (previous.profileUrl || ""),
+    accountType: profile.data?.account_type || "professional",
+    username,
+    handle,
+    displayName,
+    profileUrl: username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : (previous.profileUrl || ""),
     instagramId,
     profileImage: profile.data?.profile_picture_url || previous.profileImage || "",
     followerLabel: "Follower",
     followerValue,
+    followingValue: (followingValue !== undefined && followingValue !== null) ? String(followingValue) : (previous.followingValue || "—"),
+    followerSource,
     lastSync: Date.now(),
     note: insightsMessage
-      ? `Account Creator/Professionale collegato. Insights follower non disponibili: ${insightsMessage}`
+      ? `Account Creator/Professionale collegato. Follower da API profilo non disponibili: ${insightsMessage}`
       : "Account Creator/Professionale collegato tramite Instagram API"
   };
   await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
