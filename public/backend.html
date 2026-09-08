@@ -103,9 +103,9 @@ const socials=[
 {id:'twitch',label:'Twitch',icon:'/assets/icons/twitch.svg',description:'Seguimi su Twitch',href:'https://www.twitch.tv/thesyncfm',kind:'Followers',subKind:'Abbonati'},
 {id:'kick',label:'Kick',icon:'/assets/icons/kick.svg',description:'Seguimi su Kick',href:'#',kind:'Followers',subKind:'Abbonati'},
 {id:'tiktok',label:'TikTok',icon:'/assets/icons/tiktok.svg',description:'Seguimi su TikTok',href:'#',kind:'Follower'},
-{id:'x',label:'X',icon:'/assets/icons/x-twitter.svg',description:'Seguimi su X',href:'#',kind:'Follower'},
-{id:'discord',label:'Discord',icon:'/assets/icons/discord.svg',description:'Unisciti alla community',href:'#',kind:'Community'}
+{id:'x',label:'X',icon:'/assets/icons/x-twitter.svg',description:'Seguimi su X',href:'#',kind:'Follower'}
 ];
+const socialEditorSocials=[...socials,{id:'discord',label:'Discord',icon:'/assets/icons/discord.svg',description:'Unisciti alla community',href:'#',kind:'Community'}];
 const bannerSocials=[...socials,{id:'discord',label:'Discord',icon:'/assets/icons/discord.svg'}];
 let state={page:{title:'TheSyncFM',bio:'Seguici su tutti i nostri canali.'},socials:{},accounts:{},composer:{draft:'',targets:[]},updatedAt:0};
 let pending={avatar:null,cover:null,banners:{}};
@@ -121,7 +121,7 @@ async function load(){try{const d=await api('/api/config');state=d.config||state
 const loadConfig=async()=>{await load();return state};
 function renderAll(){renderPage();renderSocials();renderProfile();renderBanners();renderInstagramMode();renderAccounts();renderComposer()}
 function renderPage(){$('pageTitle').value=state.page.title||'TheSyncFM';$('pageBio').value=state.page.bio||'Seguici su tutti i nostri canali.'}
-function renderSocials(){const el=$('socialEditor');el.innerHTML=socials.map(s=>{const c=state.socials[s.id]||{};return `<div class="editor-row"><img src="${s.icon}" alt=""><div class="editor-fields"><span class="editor-name">${s.label}</span><div><label>Link</label><input class="text-input social-href" data-id="${s.id}" value="${escapeHtml(c.href??s.href)}" type="url" placeholder="https://..."></div><div><label>Testo sotto il nome</label><input class="text-input social-desc" data-id="${s.id}" value="${escapeHtml(c.description??s.description)}" type="text" placeholder="Seguimi…"></div></div></div>`}).join('')}
+function renderSocials(){const el=$('socialEditor');el.innerHTML=socialEditorSocials.map(s=>{const c=state.socials[s.id]||{};return `<div class="editor-row"><img src="${s.icon}" alt=""><div class="editor-fields"><span class="editor-name">${s.label}</span><div><label>Link</label><input class="text-input social-href" data-id="${s.id}" value="${escapeHtml(c.href??s.href)}" type="url" placeholder="https://..."></div><div><label>Testo sotto il nome</label><input class="text-input social-desc" data-id="${s.id}" value="${escapeHtml(c.description??s.description)}" type="text" placeholder="Seguimi…"></div></div></div>`}).join('')}
 async function persist(){const d=await api('/api/config',{method:'POST',body:JSON.stringify({page:state.page,socials:state.socials,accounts:state.accounts,composer:state.composer})});state=d.config;setServerStatus('● Salvato online','ok');return true}
 async function savePage(){state.page.title=$('pageTitle').value.trim()||'TheSyncFM';state.page.bio=$('pageBio').value.trim()||'Seguici su tutti i nostri canali.';try{if(await persist())setNote('pageSaveNote','Pubblicato online ✓','ok')}catch(e){setNote('pageSaveNote',e.message,'error')}}
 async function saveSocials(){document.querySelectorAll('.social-href').forEach(i=>{state.socials[i.dataset.id]=state.socials[i.dataset.id]||{};state.socials[i.dataset.id].href=i.value.trim()});document.querySelectorAll('.social-desc').forEach(i=>{state.socials[i.dataset.id]=state.socials[i.dataset.id]||{};state.socials[i.dataset.id].description=i.value.trim()});try{if(await persist())setNote('socialSaveNote','Link e testi pubblicati ✓','ok')}catch(e){setNote('socialSaveNote',e.message,'error')}}
