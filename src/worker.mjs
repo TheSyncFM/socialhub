@@ -853,7 +853,7 @@ async function saveConfig(request, env) {
 }
 
 function sanitizeSocials(input) {
-  const allowed=["instagram","youtube1","youtube2","twitch","kick","tiktok","x"];
+  const allowed=["instagram","youtube1","youtube2","twitch","kick","tiktok","x","discord"];
   const out={};
   for (const id of allowed) {
     const row=input?.[id] || {};
@@ -862,7 +862,7 @@ function sanitizeSocials(input) {
   return out;
 }
 function sanitizeAccounts(input) {
-  const allowed=["instagram","youtube1","youtube2","twitch","kick","tiktok","x"];
+  const allowed=["instagram","youtube1","youtube2","twitch","kick","tiktok","x","discord"];
   const out={};
   for (const id of allowed) {
     const row=input?.[id] || {};
