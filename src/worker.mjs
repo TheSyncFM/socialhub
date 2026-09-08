@@ -142,6 +142,9 @@ export default {
       if (url.pathname === "/api/accounts/callback/twitch" && request.method === "GET") return finishTwitchConnection(request, env, url);
       if (url.pathname === "/api/accounts/sync/twitch" && request.method === "POST") return syncTwitchAccount(env);
       if (url.pathname === "/api/accounts/disconnect/twitch" && request.method === "POST") return disconnectTwitchAccount(env);
+      if (url.pathname === "/api/accounts/callback/kick" && request.method === "GET") return finishKickConnection(request, env, url);
+      if (url.pathname === "/api/accounts/sync/kick" && request.method === "POST") return syncKickAccount(env);
+      if (url.pathname === "/api/accounts/disconnect/kick" && request.method === "POST") return disconnectKickAccount(env);
       if (url.pathname === "/api/accounts/callback/youtube" && request.method === "GET") return finishYouTubeConnection(request, env, url);
       if (url.pathname === "/api/accounts/youtube/select" && request.method === "GET") return selectYouTubeChannel(request, env, url);
       if (url.pathname.startsWith("/api/accounts/sync/youtube") && request.method === "POST") {
@@ -341,7 +344,7 @@ const PLATFORM_SETUP = {
   youtube1: "YouTube 1: configura le credenziali OAuth Google (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET).",
   youtube2: "YouTube 2: usa la stessa autorizzazione Google; il backend permette di gestire due canali.",
   twitch: "Twitch: configura TWITCH_CLIENT_ID e TWITCH_CLIENT_SECRET (la tua app Twitch esistente può essere riutilizzata).",
-  kick: "Kick: configura l'app OAuth/API Kick quando avremo le credenziali developer.",
+  kick: "Kick: collega il tuo account tramite OAuth 2.1. Servono KICK_CLIENT_ID e KICK_CLIENT_SECRET.",
   tiktok: "TikTok: configura TikTok Login Kit e gli scope user.info.stats e video.publish.",
   x: "X: l'API attuale è pay-per-use, quindi viene lasciata disattivata per rispettare il requisito €0."
 };
@@ -384,6 +387,24 @@ async function startAccountConnection(id, env, url){
     oauth.searchParams.set("scope","user:read:email moderator:read:followers channel:read:subscriptions");
     oauth.searchParams.set("state",state);
     return json({ok:true,ready:true,url:oauth.toString(),message:"Apro Twitch per autorizzare l'account."});
+  }
+  if(id === "kick"){
+    if(!env.KICK_CLIENT_ID || !env.KICK_CLIENT_SECRET) return json({ok:false,error:PLATFORM_SETUP.kick},503);
+    if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+    const state = crypto.randomUUID();
+    const codeVerifier = randomKickCodeVerifier();
+    const codeChallenge = await kickCodeChallenge(codeVerifier);
+    await env.SOCIALHUB_DATA.put("oauth:kick:state", JSON.stringify({state,codeVerifier,createdAt:Date.now()}), {expirationTtl:600});
+    const redirect = `${url.origin}/api/accounts/callback/kick`;
+    const oauth = new URL("https://id.kick.com/oauth/authorize");
+    oauth.searchParams.set("response_type","code");
+    oauth.searchParams.set("client_id",env.KICK_CLIENT_ID);
+    oauth.searchParams.set("redirect_uri",redirect);
+    oauth.searchParams.set("scope","user:read channel:read");
+    oauth.searchParams.set("code_challenge",codeChallenge);
+    oauth.searchParams.set("code_challenge_method","S256");
+    oauth.searchParams.set("state",state);
+    return json({ok:true,ready:true,url:oauth.toString(),message:"Apro Kick per autorizzare il tuo canale."});
   }
   return json({ok:false,error:PLATFORM_SETUP[id]},503);
 }
@@ -482,6 +503,133 @@ async function disconnectTwitchAccount(env){
   await env.SOCIALHUB_DATA.delete("oauth:twitch:token");
   const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
   config.accounts=config.accounts||{};config.accounts.twitch={connected:false};
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,config});
+}
+
+
+function randomKickCodeVerifier(){
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  let s="";
+  for(const b of bytes) s += String.fromCharCode(b);
+  return b64url(new TextEncoder().encode(s));
+}
+async function kickCodeChallenge(verifier){
+  const hash=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(verifier));
+  return b64url(new Uint8Array(hash));
+}
+async function kickTokenRequest(env, params){
+  const body=new URLSearchParams({client_id:env.KICK_CLIENT_ID,client_secret:env.KICK_CLIENT_SECRET,...params});
+  const resp=await fetch("https://id.kick.com/oauth/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+  const data=await resp.json().catch(()=>({message:"Risposta non valida da Kick OAuth"}));
+  return {ok:resp.ok,data};
+}
+async function getKickToken(env){
+  const raw=await env.SOCIALHUB_DATA?.get("oauth:kick:token");
+  if(!raw) return null;
+  try{return JSON.parse(raw)}catch{return null}
+}
+async function storeKickToken(env,token){
+  await env.SOCIALHUB_DATA.put("oauth:kick:token",JSON.stringify({accessToken:token.access_token,refreshToken:token.refresh_token,expiresIn:token.expires_in,scope:token.scope,tokenType:token.token_type,updatedAt:Date.now(),expiresAt:Date.now()+Number(token.expires_in||0)*1000}));
+}
+async function refreshKickToken(env,current){
+  if(!current?.refreshToken) return null;
+  const result=await kickTokenRequest(env,{grant_type:"refresh_token",refresh_token:current.refreshToken});
+  if(!result.ok || !result.data?.access_token) return null;
+  await storeKickToken(env,result.data);
+  return result.data.access_token;
+}
+async function kickApiRequest(accessToken,path){
+  const resp=await fetch(`https://api.kick.com${path}`,{headers:{Authorization:`Bearer ${accessToken}`,Accept:"application/json"}});
+  const data=await resp.json().catch(()=>({}));
+  return {ok:resp.ok,status:resp.status,data};
+}
+async function kickFollowersCount(broadcasterUserId,channelSlug){
+  const id=String(broadcasterUserId||"").trim();
+  const slug=String(channelSlug||"").trim();
+  if(!id && !slug) return null;
+  try{
+    const candidates=[];
+    if(id) candidates.push(`https://api.kick.com/channels/${encodeURIComponent(id)}/followers-count`);
+    if(slug) candidates.push(`https://kick.com/api/v2/channels/${encodeURIComponent(slug)}`);
+    for(const endpoint of candidates){
+      const resp=await fetch(endpoint,{headers:{Accept:"application/json"}});
+      if(!resp.ok) continue;
+      const data=await resp.json().catch(()=>({}));
+      const value=data?.followers_count ?? data?.data?.followers_count ?? data?.data?.channel?.followers_count;
+      if(value!==undefined && value!==null && value!=="") return Number(value);
+    }
+  }catch{}
+  return null;
+}
+async function fetchKickAccountData(env,accessToken){
+  const userResp=await kickApiRequest(accessToken,"/public/v1/users");
+  if(userResp.status===401) return {ok:false,reauth:true,error:"Token Kick non valido o scaduto."};
+  const user=userResp.data?.data?.[0] || userResp.data?.data || null;
+  if(!userResp.ok || !user?.user_id) return {ok:false,error:"Profilo Kick non recuperato. Verifica che l'account OAuth autorizzato sia il tuo canale."};
+
+  const chResp=await kickApiRequest(accessToken,`/public/v1/channels?broadcaster_user_id=${encodeURIComponent(user.user_id)}`);
+  if(chResp.status===401) return {ok:false,reauth:true,error:"Token Kick non valido o scaduto."};
+  const channels=Array.isArray(chResp.data?.data)?chResp.data.data:[];
+  const ch=channels[0];
+  if(!chResp.ok || !ch) return {ok:false,error:"Canale Kick non recuperato dall'API ufficiale."};
+
+  const followers=await kickFollowersCount(ch.broadcaster_user_id||user.user_id,ch.slug||user.username||"");
+  const subCount=ch.active_subscribers_count;
+  return {ok:true,account:{connected:true,handle:ch.slug||user.username||"",displayName:user.username||ch.slug||"Kick",profileImage:user.profile_picture||user.profilePicture||"",broadcasterUserId:String(ch.broadcaster_user_id||user.user_id),channelSlug:ch.slug||user.username||"",followerLabel:"Follower",followerValue:followers===null?"—":String(followers),subscriberLabel:"Abbonati",subscriberValue:(subCount===undefined||subCount===null)?"—":String(subCount),lastSync:Date.now()}};
+}
+async function finishKickConnection(request,env,url){
+  if(!env.KICK_CLIENT_ID || !env.KICK_CLIENT_SECRET) return new Response("Credenziali Kick non configurate",{status:503});
+  if(!env.SOCIALHUB_DATA) return new Response("KV SOCIALHUB_DATA non collegato",{status:503});
+  const error=url.searchParams.get("error");
+  if(error) return new Response(`<html><body style="font-family:system-ui;background:#0c0f15;color:#fff;padding:40px"><h2>Collegamento Kick non completato</h2><p>${escapeHtml(url.searchParams.get("error_description")||error)}</p><script>setTimeout(()=>window.close(),1800)</script></body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}});
+  const state=url.searchParams.get("state");
+  const code=url.searchParams.get("code");
+  const storedRaw=await env.SOCIALHUB_DATA.get("oauth:kick:state");
+  const stored=storedRaw?JSON.parse(storedRaw):null;
+  if(!state || !code || !stored || stored.state!==state || !stored.codeVerifier) return new Response("Stato OAuth Kick non valido",{status:400});
+  await env.SOCIALHUB_DATA.delete("oauth:kick:state");
+  const tokenResp=await kickTokenRequest(env,{grant_type:"authorization_code",code,redirect_uri:`${url.origin}/api/accounts/callback/kick`,code_verifier:stored.codeVerifier});
+  const token=tokenResp.data;
+  if(!tokenResp.ok || !token?.access_token) return new Response(`Errore Kick OAuth: ${escapeHtml(token?.message||token?.error_description||token?.error||"token non ottenuto")}`,{status:502});
+  const sync=await fetchKickAccountData(env,token.access_token);
+  if(!sync.ok) return new Response(`Kick autorizzato ma dati non recuperati: ${escapeHtml(sync.error||"errore sconosciuto")}`,{status:502});
+  await storeKickToken(env,token);
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};config.accounts.kick=sync.account;
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return new Response(`<html><body style="font-family:system-ui;background:#0c0f15;color:#fff;padding:40px"><h2>Kick collegato ✓</h2><p>Canale: ${escapeHtml(sync.account.channelSlug||sync.account.handle)}</p><p>Follower: ${escapeHtml(sync.account.followerValue)}</p><p>Abbonati: ${escapeHtml(sync.account.subscriberValue)}</p><p>Puoi chiudere questa finestra e tornare al backend.</p><script>setTimeout(()=>window.close(),1400)</script></body></html>`,{headers:{"content-type":"text/html; charset=utf-8"}});
+}
+async function syncKickAccount(env){
+  if(!env.SOCIALHUB_DATA || !env.KICK_CLIENT_ID || !env.KICK_CLIENT_SECRET) return json({ok:false,error:"Configurazione Kick/KV incompleta."},503);
+  let token=await getKickToken(env);
+  if(!token?.accessToken) return json({ok:false,error:"Kick non è collegato. Premi Collega.",reauth:true},409);
+  if(token.expiresAt && Date.now()>Number(token.expiresAt)-60000){
+    const refreshed=await refreshKickToken(env,token);
+    if(!refreshed) return json({ok:false,error:"Sessione Kick scaduta. Ricollega Kick.",reauth:true},401);
+    token=await getKickToken(env);
+  }
+  let result=await fetchKickAccountData(env,token.accessToken);
+  if(!result.ok && result.reauth){
+    const refreshed=await refreshKickToken(env,token);
+    if(!refreshed) return json({ok:false,error:"Sessione Kick scaduta. Ricollega Kick.",reauth:true},401);
+    result=await fetchKickAccountData(env,refreshed);
+  }
+  if(!result.ok) return json({ok:false,error:result.error||"Impossibile aggiornare Kick."},502);
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};config.accounts.kick=result.account;
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,account:result.account,config});
+}
+async function disconnectKickAccount(env){
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV non collegato."},503);
+  const token=await getKickToken(env);
+  if(token?.accessToken){
+    try{await fetch("https://id.kick.com/oauth/revoke",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({token:token.accessToken,client_id:env.KICK_CLIENT_ID||""})})}catch{}
+  }
+  await env.SOCIALHUB_DATA.delete("oauth:kick:token");
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};config.accounts.kick={connected:false};
   await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
   return json({ok:true,config});
 }
