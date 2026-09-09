@@ -578,7 +578,9 @@ async function getTikTokAccessToken(env){
 
 async function tiktokApiUserInfo(token, grantedScope=""){
   const scopes=new Set(String(grantedScope||"").split(/[\s,]+/).filter(Boolean));
-  const fields=["open_id","union_id","avatar_url","display_name"];
+  // Richiesta minima sempre compatibile con user.info.basic.
+  // I campi profile/stats vengono aggiunti solo se lo scope è realmente presente.
+  const fields=["open_id","display_name","avatar_url"];
   if(scopes.has("user.info.profile")){
     fields.push("username","profile_deep_link","is_verified");
   }
@@ -634,11 +636,15 @@ async function syncTikTokAccount(env){
     return json({ok:false,error:reason},503);
   }
   const tokenState=await tiktokState(env);
-  const profile=await tiktokApiUserInfo(auth.token, tokenState?.scope || "user.info.basic");
-  if(!profile.ok){
+  const grantedScope=tokenState?.scope || "user.info.basic";
+  const profile=await tiktokApiUserInfo(auth.token, grantedScope);
+  // Se TikTok concede il token ma User Info non restituisce tutti i campi richiesti,
+  // non blocchiamo il collegamento: l'account viene comunque salvato come collegato
+  // e i dati disponibili possono essere sincronizzati in seguito.
+  const user=profile.data?.data?.user || {};
+  if(!profile.ok && !user.open_id){
     return json({ok:false,error:`TikTok: ${tiktokError(profile.data,profile.status)}`},502);
   }
-  const user=profile.data?.data?.user || {};
   const previous=(await env.SOCIALHUB_DATA.get(CONFIG_KEY).then(raw=>raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG))).accounts?.tiktok || {};
   const username=String(user.username || previous.username || "");
   const displayName=String(user.display_name || username || previous.displayName || "TikTok");
