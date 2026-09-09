@@ -89,6 +89,22 @@ async function logoutResponse(origin){
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    // TikTok URL-prefix verification file
+if (
+  url.pathname === "/tiktokZFDbQnbb6mU6qZneMnB8H5xo39iQlmRk.txt" &&
+  request.method === "GET"
+) {
+  return new Response(
+    "tiktok-developers-site-verification=ZFDbQnbb6mU6qZneMnB8H5xo39iQlmRk",
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "public, max-age=300"
+      }
+    }
+  );
+}
     try {
       if (url.pathname === "/api/admin/login" && request.method === "POST") {
         if(!env.ADMIN_USERNAME || !env.ADMIN_PASSWORD){
