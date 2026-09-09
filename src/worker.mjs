@@ -127,7 +127,7 @@ export default {
       if (url.pathname === "/api/config" && request.method === "GET") return getConfig(env);
 
       // Tutte le operazioni amministrative richiedono login. Le callback OAuth e i GET dei media restano pubblici.
-      const publicCallback = url.pathname === "/api/accounts/callback/twitch" || url.pathname === "/api/accounts/callback/youtube" || url.pathname === "/api/accounts/youtube/select";
+      const publicCallback = url.pathname === "/api/accounts/callback/twitch" || url.pathname === "/api/accounts/callback/youtube" || url.pathname === "/api/accounts/callback/instagram" || url.pathname === "/api/accounts/callback/tiktok" || url.pathname === "/api/accounts/youtube/select";
       const publicMediaGet = url.pathname.startsWith("/api/media/") && request.method === "GET";
       const adminApi = url.pathname.startsWith("/api/") && url.pathname !== "/api/config" && !publicCallback && !publicMediaGet;
       if(adminApi && !(await isAdminAuthenticated(request,env))) return json({ok:false,error:"Accesso amministratore richiesto."},401);
@@ -146,6 +146,8 @@ export default {
       if (url.pathname === "/api/accounts/sync/kick" && request.method === "POST") return syncKickAccount(env);
       if (url.pathname === "/api/accounts/disconnect/kick" && request.method === "POST") return disconnectKickAccount(env);
       if (url.pathname === "/api/accounts/callback/youtube" && request.method === "GET") return finishYouTubeConnection(request, env, url);
+      if (url.pathname === "/api/accounts/callback/instagram" && request.method === "GET") return finishInstagramConnection(request, env, url);
+      if (url.pathname === "/api/accounts/callback/tiktok" && request.method === "GET") return finishTikTokConnection(request, env, url);
       if (url.pathname === "/api/accounts/youtube/select" && request.method === "GET") return selectYouTubeChannel(request, env, url);
       if (url.pathname.startsWith("/api/accounts/sync/youtube") && request.method === "POST") {
         const slot = decodeURIComponent(url.pathname.slice("/api/accounts/sync/youtube/".length));
@@ -157,6 +159,8 @@ export default {
       }
       if (url.pathname === "/api/accounts/sync/instagram" && request.method === "POST") return syncInstagramAccount(env);
       if (url.pathname === "/api/accounts/disconnect/instagram" && request.method === "POST") return disconnectInstagramAccount(env);
+      if (url.pathname === "/api/accounts/sync/tiktok" && request.method === "POST") return syncTikTokAccount(env);
+      if (url.pathname === "/api/accounts/disconnect/tiktok" && request.method === "POST") return disconnectTikTokAccount(env);
       if (url.pathname.startsWith("/api/publish") && request.method === "POST") return preparePublication(request, env);
 
       if (url.pathname.startsWith("/api/media/")) {
@@ -186,11 +190,13 @@ async function diagnosticConfig(env){
       twitchClientSecret:Boolean(env.TWITCH_CLIENT_SECRET),
       googleClientId:Boolean(env.GOOGLE_CLIENT_ID),
       googleClientSecret:Boolean(env.GOOGLE_CLIENT_SECRET),
+      metaAppId:Boolean(env.META_APP_ID || env.INSTAGRAM_APP_ID),
+      metaAppSecret:Boolean(env.META_APP_SECRET || env.INSTAGRAM_APP_SECRET),
+      instagramOAuthToken:Boolean(env.INSTAGRAM_ACCESS_TOKEN),
+      tiktokClientKey:Boolean(env.TIKTOK_CLIENT_KEY),
+      tiktokClientSecret:Boolean(env.TIKTOK_CLIENT_SECRET),
       kv:Boolean(env.SOCIALHUB_DATA),
-      assets:Boolean(env.ASSETS),
-      instagramAccessToken:Boolean(env.INSTAGRAM_ACCESS_TOKEN),
-      instagramApiMode:instagramApiMode(env),
-      instagramUserId:Boolean(env.INSTAGRAM_USER_ID)
+      assets:Boolean(env.ASSETS)
     },
     timestamp:Date.now()
   });
@@ -250,111 +256,208 @@ function getCookie(request,name){
 }
 function clearCookieHeader(){return "socialhub_yt_state=; Path=/api/accounts/callback/youtube; Max-Age=0; HttpOnly; Secure; SameSite=Lax"}
 
-function instagramApiMode(env){
-  const mode=String(env.INSTAGRAM_API_MODE||"instagram_login").trim().toLowerCase();
-  return mode==="facebook_login" ? "facebook_login" : "instagram_login";
+const INSTAGRAM_API_VERSION = "v25.0";
+const INSTAGRAM_BASIC_SCOPE = "instagram_business_basic";
+
+function instagramAppCredentials(env){
+  return {
+    appId: String(env.INSTAGRAM_APP_ID || env.META_APP_ID || "").trim(),
+    appSecret: String(env.INSTAGRAM_APP_SECRET || env.META_APP_SECRET || "").trim()
+  };
 }
 
-async function instagramApi(path, token, env, hostOverride){
-  const host=hostOverride || (instagramApiMode(env)==="facebook_login" ? "https://graph.facebook.com" : "https://graph.instagram.com");
-  const base=`${host}/v25.0`;
+async function instagramApi(path, token){
+  const base = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}`;
   const u = new URL(base + path);
-  const headers={"Accept":"application/json","Authorization":`Bearer ${token}`};
-  const resp = await fetch(u.toString(), { headers });
+  const resp = await fetch(u.toString(), {
+    headers: { "Accept": "application/json", "Authorization": `Bearer ${token}` }
+  });
   const data = await resp.json().catch(() => ({}));
   return { ok: resp.ok, data, status: resp.status };
 }
 
-function instagramErrorMessage(result, mode){
-  const e=result?.data?.error||{};
-  const raw=e.message || `Instagram API errore ${result?.status||"sconosciuto"}`;
-  if(e.code===200 || /api access blocked/i.test(raw)){
-    if(mode==="facebook_login"){
-      return `API access blocked. Meta sta rifiutando il token/app usato per Facebook Login. Verifica che l'Instagram sia Professionale, collegato a una Pagina Facebook e che il token abbia instagram_basic/instagram_content_publish/pages_show_list/pages_read_engagement. Se il blocco riguarda l'app, va rimosso nel pannello Meta: non è un problema del frontend.`;
-    }
-    return `API access blocked. Meta sta rifiutando il token/app usato per Instagram Login. Verifica che l'account sia Professionale (Creator o Business), che l'app Meta abbia Instagram API with Instagram Login configurata, che il token sia valido e che abbia almeno instagram_business_basic. Se il blocco riguarda l'app, va rimosso nel pannello Meta: non è un problema del frontend.`;
-  }
-  return raw;
+async function instagramShortToken(env, code, redirectUri){
+  const {appId, appSecret}=instagramAppCredentials(env);
+  const body=new URLSearchParams({
+    client_id:appId,
+    client_secret:appSecret,
+    grant_type:"authorization_code",
+    redirect_uri:redirectUri,
+    code
+  });
+  const resp=await fetch("https://api.instagram.com/oauth/access_token",{
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded","Accept":"application/json"},
+    body
+  });
+  const data=await resp.json().catch(()=>({}));
+  return {ok:resp.ok,data,status:resp.status};
 }
 
-async function getInstagramProfile(env){
-  const token=String(env.INSTAGRAM_ACCESS_TOKEN||"").trim();
-  const mode=instagramApiMode(env);
-  if(!token) return {ok:false,status:503,error:"INSTAGRAM_ACCESS_TOKEN non configurato nel Worker."};
+async function instagramLongLivedToken(env, shortToken){
+  const {appSecret}=instagramAppCredentials(env);
+  const u=new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/access_token`);
+  u.searchParams.set("grant_type","ig_exchange_token");
+  u.searchParams.set("client_secret",appSecret);
+  u.searchParams.set("access_token",shortToken);
+  const resp=await fetch(u.toString(),{headers:{"Accept":"application/json"}});
+  const data=await resp.json().catch(()=>({}));
+  return {ok:resp.ok,data,status:resp.status};
+}
 
-  if(mode==="instagram_login"){
-    const profile=await instagramApi("/me?fields=user_id,username,name,profile_picture_url,followers_count,follows_count,account_type",token,env);
-    if(!profile.ok) return {ok:false,status:profile.status,error:instagramErrorMessage(profile,mode),raw:profile.data};
-    return {ok:true,mode,token,profile:profile.data};
+async function refreshInstagramToken(token){
+  const u=new URL(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/refresh_access_token`);
+  u.searchParams.set("grant_type","ig_refresh_token");
+  u.searchParams.set("access_token",token);
+  const resp=await fetch(u.toString(),{headers:{"Accept":"application/json"}});
+  const data=await resp.json().catch(()=>({}));
+  return {ok:resp.ok,data,status:resp.status};
+}
+
+function instagramError(data,status){
+  return data?.error?.message || data?.error_message || data?.message || `Instagram API errore ${status}`;
+}
+
+async function instagramState(env){
+  if(!env.SOCIALHUB_DATA) throw new Error("KV SOCIALHUB_DATA non collegato al Worker.");
+  const raw=await env.SOCIALHUB_DATA.get("oauth:instagram:token");
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function saveInstagramToken(env, tokenData){
+  const expiresIn=Number(tokenData?.expires_in || 0);
+  const token=String(tokenData?.access_token || "");
+  if(!token) throw new Error("Instagram non ha restituito un access token.");
+  await env.SOCIALHUB_DATA.put("oauth:instagram:token",JSON.stringify({
+    accessToken:token,
+    tokenType:tokenData?.token_type || "bearer",
+    userId:tokenData?.user_id || "",
+    expiresIn,
+    expiresAt:expiresIn ? Date.now()+expiresIn*1000 : 0,
+    updatedAt:Date.now()
+  }));
+}
+
+async function getInstagramAccessToken(env){
+  const stored=await instagramState(env);
+  if(stored?.accessToken){
+    // Long-lived Instagram tokens can be refreshed before expiry. Keep a seven-day safety window.
+    if(stored.expiresAt && stored.expiresAt < Date.now()+7*24*60*60*1000){
+      const refreshed=await refreshInstagramToken(stored.accessToken);
+      if(refreshed.ok && refreshed.data?.access_token){
+        await saveInstagramToken(env,refreshed.data);
+        const fresh=await instagramState(env);
+        return {token:fresh.accessToken,source:"oauth",refreshed:true};
+      }
+      // If refresh fails but the token is still valid, use it and surface no false error here.
+      if(stored.expiresAt > Date.now()) return {token:stored.accessToken,source:"oauth",refreshed:false};
+    }
+    return {token:stored.accessToken,source:"oauth",refreshed:false};
+  }
+  // Backward-compatible manual-token fallback for an already configured Worker.
+  if(env.INSTAGRAM_ACCESS_TOKEN) return {token:String(env.INSTAGRAM_ACCESS_TOKEN),source:"manual",refreshed:false};
+  return {token:"",source:"none",refreshed:false};
+}
+
+async function finishInstagramConnection(request, env, url){
+  if(!env.SOCIALHUB_DATA) return new Response("KV SOCIALHUB_DATA non collegato al Worker.",{status:503});
+  const state=url.searchParams.get("state")||"";
+  const code=url.searchParams.get("code")||"";
+  const error=url.searchParams.get("error_reason") || url.searchParams.get("error") || "";
+  const errorDescription=url.searchParams.get("error_description") || "";
+  const storedRaw=await env.SOCIALHUB_DATA.get("oauth:instagram:state");
+  let stored=null;
+  try{stored=storedRaw?JSON.parse(storedRaw):null}catch{}
+  await env.SOCIALHUB_DATA.delete("oauth:instagram:state");
+
+  if(!state || !stored || stored.state!==state){
+    return Response.redirect(`${url.origin}/backend?instagram=error&message=${encodeURIComponent("Stato OAuth Instagram non valido o scaduto.")}`,303);
+  }
+  if(error || !code){
+    const msg=errorDescription || error || "Autorizzazione Instagram annullata.";
+    return Response.redirect(`${url.origin}/backend?instagram=error&message=${encodeURIComponent(msg)}`,303);
   }
 
-  // Facebook Login path: accept an explicit Instagram professional account ID,
-  // otherwise discover it from the Pages managed by the token owner.
-  let igId=String(env.INSTAGRAM_USER_ID||"").trim();
-  let pageToken=token;
-  if(!igId){
-    const pages=await instagramApi("/me/accounts?fields=id,name,access_token,instagram_business_account",token,env,"https://graph.facebook.com");
-    if(!pages.ok) return {ok:false,status:pages.status,error:instagramErrorMessage(pages,mode),raw:pages.data};
-    const page=Array.isArray(pages.data?.data) ? pages.data.data.find(x=>x?.instagram_business_account?.id) : null;
-    igId=page?.instagram_business_account?.id || "";
-    pageToken=page?.access_token || token;
-    if(!igId) return {ok:false,status:502,error:"Facebook Login: nessun account Instagram Professionale collegato a una Pagina Facebook è stato trovato."};
+  const {appId,appSecret}=instagramAppCredentials(env);
+  if(!appId || !appSecret){
+    return Response.redirect(`${url.origin}/backend?instagram=error&message=${encodeURIComponent("META_APP_ID/META_APP_SECRET non configurati nel Worker.")}`,303);
   }
-  const profile=await instagramApi(`/${encodeURIComponent(igId)}?fields=id,username,name,profile_picture_url,followers_count,follows_count,account_type`,pageToken,env,"https://graph.facebook.com");
-  if(!profile.ok) return {ok:false,status:profile.status,error:instagramErrorMessage(profile,mode),raw:profile.data};
-  return {ok:true,mode,token:pageToken,profile:profile.data};
+
+  const redirectUri=`${url.origin}/api/accounts/callback/instagram`;
+  const short=await instagramShortToken(env,code,redirectUri);
+  if(!short.ok || !short.data?.access_token){
+    return Response.redirect(`${url.origin}/backend?instagram=error&message=${encodeURIComponent(`Token Instagram non ottenuto: ${instagramError(short.data,short.status)}`)}`,303);
+  }
+
+  const long=await instagramLongLivedToken(env,short.data.access_token);
+  if(!long.ok || !long.data?.access_token){
+    return Response.redirect(`${url.origin}/backend?instagram=error&message=${encodeURIComponent(`Token Instagram a lunga durata non ottenuto: ${instagramError(long.data,long.status)}`)}`,303);
+  }
+  long.data.user_id=short.data.user_id || "";
+  await saveInstagramToken(env,long.data);
+
+  const synced=await syncInstagramAccount(env);
+  if(!synced.ok){
+    const body=await synced.text().catch(()=>"");
+    let msg="Instagram autorizzato, ma sincronizzazione non riuscita.";
+    try{msg=JSON.parse(body)?.error||msg}catch{}
+    return Response.redirect(`${url.origin}/backend?instagram=error&message=${encodeURIComponent(msg)}`,303);
+  }
+  return Response.redirect(`${url.origin}/backend?instagram=connected`,303);
 }
 
 async function syncInstagramAccount(env){
-  if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"Instagram: configura INSTAGRAM_ACCESS_TOKEN nel Worker."},503);
   if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+  const auth=await getInstagramAccessToken(env);
+  if(!auth.token) return json({ok:false,error:"Instagram: account non autorizzato. Premi Collega e completa Instagram Business Login."},503);
 
-  const result=await getInstagramProfile(env);
-  if(!result.ok) return json({ok:false,error:`Instagram: ${result.error}`},result.status===401?401:result.status===403?403:502);
-
-  const profile=result.profile||{};
-  const instagramId=profile.user_id || profile.id || "";
-  if(!instagramId) return json({ok:false,error:"Instagram: l'API non ha restituito l'ID dell'account."},502);
-
-  let followerValue="—";
-  let followerSource="";
-  const profileFollowers=profile.followers_count;
-  if(profileFollowers!==undefined && profileFollowers!==null && profileFollowers!==""){
-    const n=Number(profileFollowers);
-    if(Number.isFinite(n) && n>=0){
-      followerValue=String(n);
-      followerSource="profile.followers_count";
-    }
+  const profile = await instagramApi(`/me?fields=id,user_id,username,name,profile_picture_url,followers_count,follows_count,account_type`, auth.token);
+  if(!profile.ok){
+    const msg = instagramError(profile.data,profile.status);
+    const detail = profile.data?.error?.code ? ` (codice ${profile.data.error.code})` : "";
+    return json({ok:false,error:`Instagram: ${msg}${detail}`},502);
   }
 
-  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);
-  const config=raw ? JSON.parse(raw) : structuredClone(DEFAULT_CONFIG);
-  config.accounts=config.accounts||{};
-  const previous=config.accounts.instagram||{};
-  const username=profile.username||previous.username||"";
-  const handle=username ? `@${username}` : (previous.handle||"");
-  const displayName=profile.name || (username ? `@${username}` : "Instagram");
-  const followingValue=profile.follows_count;
-  config.accounts.instagram={
+  const instagramId = profile.data?.user_id || profile.data?.id || "";
+  if(!instagramId) return json({ok:false,error:"Instagram: l'API non ha restituito l'ID dell'account."},502);
+
+  let followerValue = "—";
+  let followerSource = "";
+  const profileFollowers = profile.data?.followers_count;
+  if(profileFollowers !== undefined && profileFollowers !== null && profileFollowers !== ""){
+    const n=Number(profileFollowers);
+    if(Number.isFinite(n) && n>=0){followerValue=String(n);followerSource="profile.followers_count";}
+  }
+
+  const raw = await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  const config = raw ? JSON.parse(raw) : structuredClone(DEFAULT_CONFIG);
+  config.accounts = config.accounts || {};
+  const previous = config.accounts.instagram || {};
+  const username = profile.data?.username || previous.username || "";
+  const handle = username ? `@${username}` : (previous.handle || "");
+  const displayName = profile.data?.name || (username ? `@${username}` : "Instagram");
+  const followingValue = profile.data?.follows_count;
+  config.accounts.instagram = {
     ...previous,
-    connected:true,
-    accountType:profile.account_type||"professional",
+    connected: true,
+    accountType: profile.data?.account_type || "professional",
     username,
     handle,
     displayName,
-    profileUrl:username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : (previous.profileUrl||""),
+    profileUrl: username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : (previous.profileUrl || ""),
     instagramId,
-    profileImage:profile.profile_picture_url||previous.profileImage||"",
-    followerLabel:"Follower",
+    profileImage: profile.data?.profile_picture_url || previous.profileImage || "",
+    followerLabel: "Follower",
     followerValue,
-    followingValue:(followingValue!==undefined && followingValue!==null) ? String(followingValue) : (previous.followingValue||"—"),
+    followingValue: (followingValue !== undefined && followingValue !== null) ? String(followingValue) : (previous.followingValue || "—"),
     followerSource,
-    apiMode:result.mode,
-    lastSync:Date.now(),
-    note:"Account Instagram collegato tramite API Meta"
+    lastSync: Date.now(),
+    note: auth.source === "manual"
+      ? "Account professionale collegato tramite token Instagram configurato manualmente."
+      : "Account Business collegato tramite Instagram Business Login."
   };
-  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
-  return json({ok:true,account:config.accounts.instagram,config,message:`Instagram collegato${followerValue!=="—" ? ` · ${followerValue} follower` : " · follower non disponibili"}.`});
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY, JSON.stringify(config));
+  return json({ok:true,account:config.accounts.instagram,config,message:`Instagram collegato${followerValue !== "—" ? ` · ${followerValue} follower` : " · follower non disponibili"}.`});
 }
 
 async function disconnectInstagramAccount(env){
@@ -375,22 +478,226 @@ async function disconnectInstagramAccount(env){
 }
 
 const PLATFORM_SETUP = {
-  instagram: "Instagram: usa un account Professionale (Creator o Business) con Instagram API. Modalità predefinita: Instagram Login; in alternativa imposta INSTAGRAM_API_MODE=facebook_login.",
+  instagram: "Instagram: puoi usare un account personale con configurazione manuale oppure un account professionale per le integrazioni API.",
   youtube1: "YouTube 1: configura le credenziali OAuth Google (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET).",
   youtube2: "YouTube 2: usa la stessa autorizzazione Google; il backend permette di gestire due canali.",
   twitch: "Twitch: configura TWITCH_CLIENT_ID e TWITCH_CLIENT_SECRET (la tua app Twitch esistente può essere riutilizzata).",
   kick: "Kick: collega il tuo account tramite OAuth 2.1. Servono KICK_CLIENT_ID e KICK_CLIENT_SECRET.",
-  tiktok: "TikTok: configura TikTok Login Kit e gli scope user.info.stats e video.publish.",
+  tiktok: "TikTok: configura TikTok Login Kit con TIKTOK_CLIENT_KEY e TIKTOK_CLIENT_SECRET; per i follower serve user.info.stats.",
   x: "X: l'API attuale è pay-per-use, quindi viene lasciata disattivata per rispettare il requisito €0."
 };
+
+
+const TIKTOK_DEFAULT_SCOPES = ["user.info.basic","user.info.stats"];
+
+function tikTokScopes(env){
+  const configured=String(env.TIKTOK_SCOPES || "").trim();
+  const raw=configured ? configured.split(/[\s,]+/).filter(Boolean) : TIKTOK_DEFAULT_SCOPES;
+  return [...new Set(raw)];
+}
+
+function tiktokError(data,status){
+  return data?.error_description || data?.error?.message || data?.message || data?.error || `TikTok API errore ${status}`;
+}
+
+async function tiktokState(env){
+  if(!env.SOCIALHUB_DATA) throw new Error("KV SOCIALHUB_DATA non collegato al Worker.");
+  const raw=await env.SOCIALHUB_DATA.get("oauth:tiktok:token");
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function saveTikTokToken(env,tokenData,previous={}){
+  if(!env.SOCIALHUB_DATA) throw new Error("KV SOCIALHUB_DATA non collegato al Worker.");
+  const accessToken=String(tokenData?.access_token || "");
+  if(!accessToken) throw new Error("TikTok non ha restituito un access token.");
+  const expiresIn=Number(tokenData?.expires_in || 0);
+  const refreshToken=String(tokenData?.refresh_token || previous.refreshToken || "");
+  const refreshExpiresIn=Number(tokenData?.refresh_expires_in || 0);
+  const openId=String(tokenData?.open_id || previous.openId || "");
+  await env.SOCIALHUB_DATA.put("oauth:tiktok:token",JSON.stringify({
+    accessToken,
+    refreshToken,
+    openId,
+    scope:String(tokenData?.scope || previous.scope || ""),
+    tokenType:tokenData?.token_type || previous.tokenType || "Bearer",
+    expiresIn,
+    expiresAt:expiresIn ? Date.now()+expiresIn*1000 : (previous.expiresAt || 0),
+    refreshExpiresIn,
+    refreshExpiresAt:refreshExpiresIn ? Date.now()+refreshExpiresIn*1000 : (previous.refreshExpiresAt || 0),
+    updatedAt:Date.now()
+  }));
+}
+
+async function tiktokTokenRequest(env,params){
+  const body=new URLSearchParams({
+    client_key:String(env.TIKTOK_CLIENT_KEY || "").trim(),
+    client_secret:String(env.TIKTOK_CLIENT_SECRET || "").trim(),
+    ...params
+  });
+  const resp=await fetch("https://open.tiktokapis.com/v2/oauth/token/",{
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded","Cache-Control":"no-cache","Accept":"application/json"},
+    body
+  });
+  const data=await resp.json().catch(()=>({}));
+  return {ok:resp.ok && !data?.error,status:resp.status,data};
+}
+
+async function getTikTokAccessToken(env){
+  const stored=await tiktokState(env);
+  if(!stored?.accessToken) return {token:"",source:"none"};
+  const now=Date.now();
+  if(stored.expiresAt && stored.expiresAt <= now){
+    if(!stored.refreshToken || (stored.refreshExpiresAt && stored.refreshExpiresAt <= now)) return {token:"",source:"expired"};
+    const refreshed=await tiktokTokenRequest(env,{grant_type:"refresh_token",refresh_token:stored.refreshToken});
+    if(refreshed.ok && refreshed.data?.access_token){
+      await saveTikTokToken(env,refreshed.data,stored);
+      const fresh=await tiktokState(env);
+      return {token:fresh.accessToken,source:"oauth",refreshed:true};
+    }
+    return {token:"",source:"refresh_error",error:tiktokError(refreshed.data,refreshed.status)};
+  }
+  if(stored.expiresAt && stored.expiresAt <= now+60*60*1000 && stored.refreshToken){
+    const refreshed=await tiktokTokenRequest(env,{grant_type:"refresh_token",refresh_token:stored.refreshToken});
+    if(refreshed.ok && refreshed.data?.access_token){
+      await saveTikTokToken(env,refreshed.data,stored);
+      const fresh=await tiktokState(env);
+      return {token:fresh.accessToken,source:"oauth",refreshed:true};
+    }
+  }
+  return {token:stored.accessToken,source:"oauth",refreshed:false};
+}
+
+async function tiktokApiUserInfo(token){
+  const u=new URL("https://open.tiktokapis.com/v2/user/info/");
+  u.searchParams.set("fields",["open_id","union_id","avatar_url","display_name","username","profile_deep_link","is_verified","follower_count","following_count","likes_count","video_count"].join(","));
+  const resp=await fetch(u.toString(),{headers:{"Accept":"application/json","Authorization":`Bearer ${token}`}});
+  const data=await resp.json().catch(()=>({}));
+  const apiError=data?.error?.code && data.error.code!=="ok";
+  return {ok:resp.ok && !apiError,status:resp.status,data};
+}
+
+async function finishTikTokConnection(request,env,url){
+  if(!env.SOCIALHUB_DATA) return new Response("KV SOCIALHUB_DATA non collegato",{status:503});
+  if(!env.TIKTOK_CLIENT_KEY || !env.TIKTOK_CLIENT_SECRET) return Response.redirect(`${url.origin}/backend?tiktok=error&message=${encodeURIComponent("TIKTOK_CLIENT_KEY/TIKTOK_CLIENT_SECRET non configurati nel Worker.")}`,303);
+  const state=url.searchParams.get("state")||"";
+  const code=url.searchParams.get("code")||"";
+  const error=url.searchParams.get("error")||"";
+  const errorDescription=url.searchParams.get("error_description")||"";
+  const storedRaw=await env.SOCIALHUB_DATA.get("oauth:tiktok:state");
+  let stored=null; try{stored=storedRaw?JSON.parse(storedRaw):null}catch{}
+  await env.SOCIALHUB_DATA.delete("oauth:tiktok:state");
+  if(!state || !stored || stored.state!==state){
+    return Response.redirect(`${url.origin}/backend?tiktok=error&message=${encodeURIComponent("Stato OAuth TikTok non valido o scaduto.")}`,303);
+  }
+  if(error || !code){
+    const msg=errorDescription || error || "Autorizzazione TikTok annullata.";
+    return Response.redirect(`${url.origin}/backend?tiktok=error&message=${encodeURIComponent(msg)}`,303);
+  }
+  const redirectUri=`${url.origin}/api/accounts/callback/tiktok`;
+  const tokenResp=await tiktokTokenRequest(env,{grant_type:"authorization_code",code,redirect_uri:redirectUri});
+  if(!tokenResp.ok || !tokenResp.data?.access_token){
+    return Response.redirect(`${url.origin}/backend?tiktok=error&message=${encodeURIComponent(`Token TikTok non ottenuto: ${tiktokError(tokenResp.data,tokenResp.status)}`)}`,303);
+  }
+  await saveTikTokToken(env,tokenResp.data);
+  const synced=await syncTikTokAccount(env);
+  if(!synced.ok){
+    const body=await synced.text().catch(()=>"");
+    let msg="TikTok autorizzato, ma sincronizzazione non riuscita.";
+    try{msg=JSON.parse(body)?.error||msg}catch{}
+    return Response.redirect(`${url.origin}/backend?tiktok=error&message=${encodeURIComponent(msg)}`,303);
+  }
+  return Response.redirect(`${url.origin}/backend?tiktok=connected`,303);
+}
+
+async function syncTikTokAccount(env){
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+  const auth=await getTikTokAccessToken(env);
+  if(!auth.token){
+    const reason=auth.source==="expired" ? "Token TikTok scaduto. Premi Collega per autorizzare di nuovo l'account." : (auth.error ? `Token TikTok non aggiornato: ${auth.error}` : "TikTok: account non autorizzato. Premi Collega e completa TikTok Login.");
+    return json({ok:false,error:reason},503);
+  }
+  const profile=await tiktokApiUserInfo(auth.token);
+  if(!profile.ok){
+    return json({ok:false,error:`TikTok: ${tiktokError(profile.data,profile.status)}`},502);
+  }
+  const user=profile.data?.data?.user || {};
+  const previous=(await env.SOCIALHUB_DATA.get(CONFIG_KEY).then(raw=>raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG))).accounts?.tiktok || {};
+  const username=String(user.username || previous.username || "");
+  const displayName=String(user.display_name || username || previous.displayName || "TikTok");
+  const followerValue=(user.follower_count!==undefined && user.follower_count!==null) ? String(user.follower_count) : (previous.followerValue || "—");
+  const followingValue=(user.following_count!==undefined && user.following_count!==null) ? String(user.following_count) : (previous.followingValue || "—");
+  const configRaw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  const config=configRaw?JSON.parse(configRaw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};
+  config.accounts.tiktok={
+    ...previous,
+    connected:true,
+    username,
+    handle:username ? `@${username}` : (previous.handle || ""),
+    displayName,
+    profileUrl:user.profile_deep_link || (username ? `https://www.tiktok.com/@${encodeURIComponent(username)}` : (previous.profileUrl || "")),
+    tiktokOpenId:user.open_id || previous.tiktokOpenId || "",
+    profileImage:user.avatar_url || previous.profileImage || "",
+    followerLabel:"Follower",
+    followerValue,
+    followingValue,
+    likesValue:(user.likes_count!==undefined && user.likes_count!==null) ? String(user.likes_count) : (previous.likesValue || "—"),
+    videoCount:(user.video_count!==undefined && user.video_count!==null) ? String(user.video_count) : (previous.videoCount || "—"),
+    followerSource:"TikTok API v2 user.info.stats",
+    lastSync:Date.now(),
+    note:"Account TikTok collegato tramite TikTok Login Kit."
+  };
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,account:config.accounts.tiktok,config,message:`TikTok collegato${followerValue!=="—"?` · ${followerValue} follower`:" · follower non disponibili"}.`});
+}
+
+async function disconnectTikTokAccount(env){
+  if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+  await env.SOCIALHUB_DATA.delete("oauth:tiktok:token");
+  const raw=await env.SOCIALHUB_DATA.get(CONFIG_KEY);
+  const config=raw?JSON.parse(raw):structuredClone(DEFAULT_CONFIG);
+  config.accounts=config.accounts||{};
+  const previous=config.accounts.tiktok||{};
+  config.accounts.tiktok={...previous,connected:false,followerLabel:"Follower",followerValue:"—",lastSync:0};
+  await env.SOCIALHUB_DATA.put(CONFIG_KEY,JSON.stringify(config));
+  return json({ok:true,config,message:"TikTok scollegato dal pannello."});
+}
 
 async function startAccountConnection(id, env, url){
   const allowed = ["instagram","youtube1","youtube2","twitch","kick","tiktok","x"];
   if(!allowed.includes(id)) return json({ok:false,error:"Account non riconosciuto"},400);
   if(id === "x") return json({ok:false,error:PLATFORM_SETUP.x},402);
   if(id === "instagram") {
-    if(!env.INSTAGRAM_ACCESS_TOKEN) return json({ok:false,error:"Instagram: configura INSTAGRAM_ACCESS_TOKEN nel Worker dopo aver generato il token dalla Meta App."},503);
-    return syncInstagramAccount(env);
+    const {appId,appSecret}=instagramAppCredentials(env);
+    if(!appId || !appSecret) return json({ok:false,error:"Instagram: configura META_APP_ID e META_APP_SECRET nel Worker."},503);
+    if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+    const state=crypto.randomUUID();
+    await env.SOCIALHUB_DATA.put("oauth:instagram:state",JSON.stringify({state,createdAt:Date.now()}),{expirationTtl:600});
+    const redirect=`${url.origin}/api/accounts/callback/instagram`;
+    const oauth=new URL("https://www.instagram.com/oauth/authorize");
+    oauth.searchParams.set("client_id",appId);
+    oauth.searchParams.set("redirect_uri",redirect);
+    oauth.searchParams.set("response_type","code");
+    oauth.searchParams.set("scope",INSTAGRAM_BASIC_SCOPE);
+    oauth.searchParams.set("state",state);
+    oauth.searchParams.set("enable_fb_login","0");
+    oauth.searchParams.set("force_authentication","1");
+    return json({ok:true,ready:true,url:oauth.toString(),message:"Apro Instagram per autorizzare l'account Business."});
+  }
+  if(id === "tiktok"){
+    if(!env.TIKTOK_CLIENT_KEY || !env.TIKTOK_CLIENT_SECRET) return json({ok:false,error:"TikTok: configura TIKTOK_CLIENT_KEY e TIKTOK_CLIENT_SECRET nel Worker."},503);
+    if(!env.SOCIALHUB_DATA) return json({ok:false,error:"KV SOCIALHUB_DATA non collegato al Worker."},503);
+    const state=crypto.randomUUID();
+    await env.SOCIALHUB_DATA.put("oauth:tiktok:state",JSON.stringify({state,createdAt:Date.now()}),{expirationTtl:600});
+    const redirect=`${url.origin}/api/accounts/callback/tiktok`;
+    const oauth=new URL("https://www.tiktok.com/v2/auth/authorize/");
+    oauth.searchParams.set("client_key",String(env.TIKTOK_CLIENT_KEY).trim());
+    oauth.searchParams.set("scope",tikTokScopes(env).join(","));
+    oauth.searchParams.set("response_type","code");
+    oauth.searchParams.set("redirect_uri",redirect);
+    oauth.searchParams.set("state",state);
+    return json({ok:true,ready:true,url:oauth.toString(),message:"Apro TikTok per autorizzare l'account."});
   }
   if(id === "youtube1" || id === "youtube2"){
     if(!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return json({ok:false,error:PLATFORM_SETUP[id]},503);
