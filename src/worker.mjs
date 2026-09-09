@@ -89,22 +89,6 @@ async function logoutResponse(origin){
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    // TikTok URL-prefix verification file
-if (
-  url.pathname === "/tiktokZFDbQnbb6mU6qZneMnB8H5xo39iQlmRk.txt" &&
-  request.method === "GET"
-) {
-  return new Response(
-    "tiktok-developers-site-verification=ZFDbQnbb6mU6qZneMnB8H5xo39iQlmRk",
-    {
-      status: 200,
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "public, max-age=300"
-      }
-    }
-  );
-}
     try {
       if (url.pathname === "/api/admin/login" && request.method === "POST") {
         if(!env.ADMIN_USERNAME || !env.ADMIN_PASSWORD){
@@ -137,6 +121,14 @@ if (
         const response=await env.ASSETS.fetch(new Request(new URL(target,url.origin),request));
         const headers=noCacheHeaders(new Headers(response.headers));
         return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
+      }
+
+      // TikTok URL-prefix verification file (required by TikTok Developer Portal).
+      if (url.pathname === "/tiktokZFDbQnbb6mU6qZneMnB8H5xo39iQlmRk.txt" && request.method === "GET") {
+        return new Response("tiktok-developers-site-verification=ZFDbQnbb6mU6qZneMnB8H5xo39iQlmRk", {
+          status: 200,
+          headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=300" }
+        });
       }
 
       // La configurazione di lettura resta pubblica per la pagina pubblica.
@@ -504,7 +496,7 @@ const PLATFORM_SETUP = {
 };
 
 
-const TIKTOK_DEFAULT_SCOPES = ["user.info.basic","user.info.stats"];
+const TIKTOK_DEFAULT_SCOPES = ["user.info.basic","user.info.profile","user.info.stats","video.upload","video.publish"];
 
 function tikTokScopes(env){
   const configured=String(env.TIKTOK_SCOPES || "").trim();
@@ -584,13 +576,21 @@ async function getTikTokAccessToken(env){
   return {token:stored.accessToken,source:"oauth",refreshed:false};
 }
 
-async function tiktokApiUserInfo(token){
+async function tiktokApiUserInfo(token, grantedScope=""){
+  const scopes=new Set(String(grantedScope||"").split(/[\s,]+/).filter(Boolean));
+  const fields=["open_id","union_id","avatar_url","display_name"];
+  if(scopes.has("user.info.profile")){
+    fields.push("username","profile_deep_link","is_verified");
+  }
+  if(scopes.has("user.info.stats")){
+    fields.push("follower_count","following_count","likes_count","video_count");
+  }
   const u=new URL("https://open.tiktokapis.com/v2/user/info/");
-  u.searchParams.set("fields",["open_id","union_id","avatar_url","display_name","username","profile_deep_link","is_verified","follower_count","following_count","likes_count","video_count"].join(","));
+  u.searchParams.set("fields",fields.join(","));
   const resp=await fetch(u.toString(),{headers:{"Accept":"application/json","Authorization":`Bearer ${token}`}});
   const data=await resp.json().catch(()=>({}));
   const apiError=data?.error?.code && data.error.code!=="ok";
-  return {ok:resp.ok && !apiError,status:resp.status,data};
+  return {ok:resp.ok && !apiError,status:resp.status,data,fields,scopes:[...scopes]};
 }
 
 async function finishTikTokConnection(request,env,url){
@@ -633,7 +633,8 @@ async function syncTikTokAccount(env){
     const reason=auth.source==="expired" ? "Token TikTok scaduto. Premi Collega per autorizzare di nuovo l'account." : (auth.error ? `Token TikTok non aggiornato: ${auth.error}` : "TikTok: account non autorizzato. Premi Collega e completa TikTok Login.");
     return json({ok:false,error:reason},503);
   }
-  const profile=await tiktokApiUserInfo(auth.token);
+  const tokenState=await tiktokState(env);
+  const profile=await tiktokApiUserInfo(auth.token, tokenState?.scope || "user.info.basic");
   if(!profile.ok){
     return json({ok:false,error:`TikTok: ${tiktokError(profile.data,profile.status)}`},502);
   }
